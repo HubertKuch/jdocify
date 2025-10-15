@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'pl.hubertkuch.jdocify'
+version = '0.1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'de.kherud:llama:4.2.0'
+}

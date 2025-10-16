@@ -6,7 +6,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,34 +24,33 @@ import pl.hubertkuch.jdocify.ai.ModelManager;
 import pl.hubertkuch.jdocify.annotations.Documented;
 import pl.hubertkuch.jdocify.annotations.DocumentedExcluded;
 import pl.hubertkuch.jdocify.annotations.DocumentedStory;
-import pl.hubertkuch.jdocify.annotations.StoryStep;
 import pl.hubertkuch.jdocify.description.AiDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.DescriptionStrategy;
 import pl.hubertkuch.jdocify.description.JavaDocDescriptionStrategy;
 import pl.hubertkuch.jdocify.parser.JavaDocParser;
-import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
+import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.settings.Settings;
-import pl.hubertkuch.jdocify.template.TemplateEngine;
+import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
 import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
 import pl.hubertkuch.jdocify.vo.StoryData;
 import pl.hubertkuch.jdocify.vo.StoryStepData;
-import pl.hubertkuch.jdocify.writer.DocumentationWriter;
+import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 
 public class DocumentationGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentationGenerator.class);
 
-    private final TemplateEngine templateEngine;
-    private final DocumentationWriter documentationWriter;
+    private final DefaultTemplateEngine defaultTemplateEngine;
+    private final DefaultDocumentationWriter defaultDocumentationWriter;
     private final ModelManager modelManager;
 
     public DocumentationGenerator() {
-        this.templateEngine = new TemplateEngine();
-        this.documentationWriter = new DocumentationWriter();
+        this.defaultTemplateEngine = DefaultTemplateEngine.createTemplateEngine();
+        this.defaultDocumentationWriter = new DefaultDocumentationWriter();
         this.modelManager = new ModelManager();
     }
 
@@ -88,7 +86,7 @@ public class DocumentationGenerator {
     }
 
     public void generate(Set<Class<?>> classes) throws IOException {
-        var markdownRenderer = new MarkdownRenderer(templateEngine);
+        var markdownRenderer = new DefaultMarkdownRenderer(defaultTemplateEngine);
         Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
 
         try {
@@ -100,7 +98,7 @@ public class DocumentationGenerator {
                 var classData = processClass(clazz, javaDocParser, getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
 
                 var renderedTemplate = markdownRenderer.render(classData);
-                documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
+                defaultDocumentationWriter.write(clazz.getSimpleName(), renderedTemplate);
             }
         } finally {
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
@@ -108,7 +106,7 @@ public class DocumentationGenerator {
     }
 
     public void generateStories(Set<Class<?>> storyClasses) throws IOException {
-        var markdownRenderer = new MarkdownRenderer(templateEngine);
+        var markdownRenderer = new DefaultMarkdownRenderer(defaultTemplateEngine);
         Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
 
         try {
@@ -123,8 +121,8 @@ public class DocumentationGenerator {
 
                 var storyData = processStory(storyClass, documentedStoryAnnotation, aiDocGeneratorOptional);
 
-                var renderedTemplate = markdownRenderer.render(storyData); // New render method in MarkdownRenderer
-                documentationWriter.write(documentedStoryAnnotation.name(), renderedTemplate);
+                var renderedTemplate = markdownRenderer.render(storyData); // New render method in DefaultMarkdownRenderer
+                defaultDocumentationWriter.write(documentedStoryAnnotation.name(), renderedTemplate);
             }
         } finally {
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);

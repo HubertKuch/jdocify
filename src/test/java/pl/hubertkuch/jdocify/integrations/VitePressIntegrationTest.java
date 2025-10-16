@@ -3,7 +3,7 @@ package pl.hubertkuch.jdocify.integrations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
+import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.vo.ClassData;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 
 class VitePressIntegrationTest {
 
-    private MarkdownRenderer markdownRenderer;
+    private DefaultMarkdownRenderer defaultMarkdownRenderer;
 
     @TempDir
     private Path tempDir;
@@ -28,9 +28,9 @@ class VitePressIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Use a real MarkdownRenderer mock to control its output
-        markdownRenderer = mock(MarkdownRenderer.class);
-        vitePressIntegration = new VitePressIntegration(markdownRenderer, tempDir);
+        // Use a real DefaultMarkdownRenderer mock to control its output
+        defaultMarkdownRenderer = mock(DefaultMarkdownRenderer.class);
+        vitePressIntegration = new VitePressIntegration(tempDir);
     }
 
     @Test
@@ -40,8 +40,8 @@ class VitePressIntegrationTest {
         var class2 = new ClassData("MyClass2", "com.example", null, null, null);
         List<ClassData> classes = List.of(class1, class2);
 
-        when(markdownRenderer.render(class1)).thenReturn("# MyClass1 Docs");
-        when(markdownRenderer.render(class2)).thenReturn("# MyClass2 Docs");
+        when(defaultMarkdownRenderer.render(class1)).thenReturn("# MyClass1 Docs");
+        when(defaultMarkdownRenderer.render(class2)).thenReturn("# MyClass2 Docs");
 
         // Act
         vitePressIntegration.run(classes);
@@ -59,8 +59,8 @@ class VitePressIntegrationTest {
         assertTrue(Files.exists(class2Path), "Markdown for MyClass2 should exist");
         assertEquals("# MyClass2 Docs", Files.readString(class2Path));
 
-        verify(markdownRenderer, times(1)).render(class1);
-        verify(markdownRenderer, times(1)).render(class2);
+        verify(defaultMarkdownRenderer, times(1)).render(class1);
+        verify(defaultMarkdownRenderer, times(1)).render(class2);
 
         // Verify index.md
         Path indexPath = docsDir.resolve("index.md");
@@ -126,6 +126,6 @@ class VitePressIntegrationTest {
 
         assertTrue(matchFound, "Sidebar items should be empty");
 
-        verify(markdownRenderer, never()).render(any(ClassData.class));
+        verify(defaultMarkdownRenderer, never()).render(any(ClassData.class));
     }
 }

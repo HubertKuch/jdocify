@@ -2,7 +2,6 @@ package pl.hubertkuch.jdocify.integrations;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
 import pl.hubertkuch.jdocify.vo.ClassData;
 
 import java.io.IOException;
@@ -15,11 +14,9 @@ import java.util.stream.Collectors;
 public class VitePressIntegration implements Integration {
 
     private static final Logger log = LoggerFactory.getLogger(VitePressIntegration.class);
-    private final MarkdownRenderer markdownRenderer;
     private final Path outputDir;
 
-    public VitePressIntegration(MarkdownRenderer markdownRenderer, Path outputDir) {
-        this.markdownRenderer = markdownRenderer;
+    public VitePressIntegration(Path outputDir) {
         this.outputDir = outputDir.resolve("docs");
     }
 
@@ -28,9 +25,8 @@ public class VitePressIntegration implements Integration {
         Files.createDirectories(outputDir);
 
         for (var classData : classes) {
-            var renderedMarkdown = markdownRenderer.render(classData);
             var classFilePath = outputDir.resolve(classData.name() + ".md");
-            Files.writeString(classFilePath, renderedMarkdown, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
             log.debug("Wrote documentation for class: {}", classFilePath);
         }
 

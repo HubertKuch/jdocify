@@ -1,15 +1,13 @@
 package pl.hubertkuch.jdocify.integration;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pl.hubertkuch.jdocify.generator.DocumentationGenerator;
 import pl.hubertkuch.jdocify.settings.Settings;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,26 +18,18 @@ class DocumentationGeneratorIntegrationTest {
     private final Path outputFilePath = Path.of(outputDir, outputFileName);
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         Settings.reset();
         // Ensure the output directory exists and is empty
-        new File(outputDir).mkdirs();
-        try {
-            Files.deleteIfExists(outputFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Files.createDirectories(Path.of(outputDir));
+        Files.deleteIfExists(outputFilePath);
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws IOException {
         Settings.reset();
         // Clean up the generated file
-        try {
-            Files.deleteIfExists(outputFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Files.deleteIfExists(outputFilePath);
     }
 
     @Test

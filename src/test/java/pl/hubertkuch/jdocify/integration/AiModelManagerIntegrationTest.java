@@ -11,6 +11,8 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
+import pl.hubertkuch.jdocify.ai.AiDocGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -60,9 +62,10 @@ class AiModelManagerIntegrationTest {
         System.setProperty("jdocify.ai.downloadUrl", dummyModelUrl.toString());
 
         // When
-        modelManager.initAiDocGenerator();
+        Optional<AiDocGenerator> aiDocGenerator = modelManager.initAiDocGenerator();
 
         // Then
         assertTrue(Files.exists(modelPath));
+        assertTrue(aiDocGenerator.isEmpty()); // Assert that the generator is empty due to invalid model
     }
 }

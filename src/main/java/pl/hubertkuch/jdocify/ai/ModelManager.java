@@ -1,10 +1,10 @@
 package pl.hubertkuch.jdocify.ai;
 
 import de.kherud.llama.ModelParameters;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -16,11 +16,11 @@ public class ModelManager {
 
     private void downloadModel(String url, String path) throws IOException {
         log.info("Downloading model from {} to {}", url, path);
-        var modelFile = new File(path);
-        modelFile.getParentFile().mkdirs();
+        var modelPath = Paths.get(path);
+        Files.createDirectories(modelPath.getParent());
 
         try (var in = new URL(url).openStream()) {
-            Files.copy(in, modelFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, modelPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
         log.info("Model downloaded successfully.");
@@ -35,10 +35,10 @@ public class ModelManager {
             return Optional.empty();
         }
 
-        var modelPath = Settings.get().getModelPath();
-        var modelFile = new File(modelPath);
+        var modelPathStr = Settings.get().getModelPath();
+        var modelPath = Paths.get(modelPathStr);
 
-        if (!modelFile.exists()) {
+        if (!Files.exists(modelPath)) {
             log.warn("Model file not found at path: {}", modelPath);
             var downloadUrl = Settings.get().getModelDownloadUrl();
             if (downloadUrl == null || downloadUrl.isEmpty()) {
@@ -49,7 +49,7 @@ public class ModelManager {
                 return Optional.empty();
             }
             try {
-                downloadModel(downloadUrl, modelPath);
+                downloadModel(downloadUrl, modelPathStr);
             } catch (IOException e) {
                 log.error("Failed to download model from {}: {}", downloadUrl, e.getMessage());
 
@@ -59,7 +59,7 @@ public class ModelManager {
 
         log.info("Initializing AiDocGenerator with model path: {}", modelPath);
         try {
-            var modelParameters = new ModelParameters().setModel(modelPath);
+            var modelParameters = new ModelParameters().setModel(modelPathStr);
             return Optional.of(new AiDocGenerator(modelParameters));
         } catch (Exception e) {
             log.error("Failed to load model from path: {}. Error: {}", modelPath, e.getMessage());

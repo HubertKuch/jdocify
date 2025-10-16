@@ -24,6 +24,11 @@ import pl.hubertkuch.jdocify.parser.JavaDocParser;
 import pl.hubertkuch.jdocify.settings.Settings;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
+import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
+import pl.hubertkuch.jdocify.vo.ClassData;
+import pl.hubertkuch.jdocify.vo.ConstructorData;
+import pl.hubertkuch.jdocify.vo.FieldData;
+import pl.hubertkuch.jdocify.vo.MethodData;
 
 public class DocumentationGenerator {
 
@@ -63,6 +68,7 @@ public class DocumentationGenerator {
     }
 
     public void generate(Set<Class<?>> classes) throws IOException {
+        var markdownRenderer = new MarkdownRenderer(templateEngine);
         for (var clazz : classes) {
             log.info("Generating documentation for class: {}", clazz.getName());
 
@@ -74,19 +80,16 @@ public class DocumentationGenerator {
                             clazz,
                             javaDocParser,
                             getDescriptionStrategies(javaDocParser, aiDocGenerator));
-            var renderedTemplate =
-                    templateEngine.render(
-                            templateEngine.getTemplate("class.md.template"), classData);
 
+            var renderedTemplate = markdownRenderer.render(classData);
             documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
         }
     }
 
-    private Map<String, String> processClass(
+    private ClassData processClass(
             Class<?> clazz,
             JavaDocParser javaDocParser,
-            List<DescriptionStrategy> descriptionStrategies)
-            throws IOException {
+            List<DescriptionStrategy> descriptionStrategies) {
         var documentedAnnotation = clazz.getAnnotation(Documented.class);
         var classDescription = documentedAnnotation.description();
 
@@ -94,76 +97,52 @@ public class DocumentationGenerator {
             classDescription = javaDocParser.getClassJavaDoc(clazz.getSimpleName()).orElse("");
         }
 
-        var data = new HashMap<String, String>();
-        data.put(
-                "class.name",
+        var className =
                 documentedAnnotation.name().isEmpty()
                         ? clazz.getSimpleName()
-                        : documentedAnnotation.name());
-        data.put("class.description", classDescription);
-        data.put("fields", processFields(clazz));
-        data.put("constructors", processConstructors(clazz));
-        data.put("methods", processMethods(clazz, descriptionStrategies));
+                        : documentedAnnotation.name();
 
-        return data;
+        return new ClassData(
+                className,
+                classDescription,
+                processFields(clazz),
+                processConstructors(clazz),
+                processMethods(clazz, descriptionStrategies));
     }
 
-    private String processFields(Class<?> clazz) throws IOException {
-        var fieldsBuilder = new StringBuilder();
-        var fieldTemplate = templateEngine.getTemplate("field.md.template");
-        for (var field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(DocumentedExcluded.class)) {
-                continue;
-            }
-            var fieldData = new HashMap<String, String>();
-            fieldData.put("field.name", field.getName());
-            fieldData.put("field.type", field.getType().getSimpleName());
-            fieldsBuilder.append(templateEngine.render(fieldTemplate, fieldData));
-        }
-
-        return fieldsBuilder.toString();
+    private List<FieldData> processFields(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> !field.isAnnotationPresent(DocumentedExcluded.class))
+                .map(field -> new FieldData(field.getName(), field.getType().getSimpleName()))
+                .collect(Collectors.toList());
     }
 
-    private String processConstructors(Class<?> clazz) throws IOException {
-        var constructorsBuilder = new StringBuilder();
-        var constructorTemplate = templateEngine.getTemplate("constructor.md.template");
-        for (var constructor : clazz.getDeclaredConstructors()) {
-            if (constructor.isAnnotationPresent(DocumentedExcluded.class)) {
-                continue;
-            }
-            var constructorData = new HashMap<String, String>();
-            constructorData.put("constructor.signature", getConstructorSignature(constructor));
-            constructorsBuilder.append(templateEngine.render(constructorTemplate, constructorData));
-        }
-
-        return constructorsBuilder.toString();
+    private List<ConstructorData> processConstructors(Class<?> clazz) {
+        var constructors = Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(constructor -> !constructor.isAnnotationPresent(DocumentedExcluded.class))
+                .map(constructor -> new ConstructorData(getConstructorSignature(constructor)))
+                .collect(Collectors.toList());
+        log.info("Processed {} constructors for class {}: {}", constructors.size(), clazz.getSimpleName(), constructors);
+        return constructors;
     }
 
-    private String processMethods(Class<?> clazz, List<DescriptionStrategy> descriptionStrategies)
-            throws IOException {
-        var methodsBuilder = new StringBuilder();
-        var methodTemplate = templateEngine.getTemplate("method.md.template");
-        for (var method : clazz.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(DocumentedExcluded.class)) {
-                continue;
-            }
-
-            var description =
-                    descriptionStrategies.stream()
-                            .map(strategy -> strategy.getDescription(method))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .findFirst()
-                            .orElse("");
-
-            var methodData = new HashMap<String, String>();
-            methodData.put("method.name", method.getName());
-            methodData.put("method.signature", getMethodSignature(method));
-            methodData.put("method.description", description);
-            methodsBuilder.append(templateEngine.render(methodTemplate, methodData));
-        }
-
-        return methodsBuilder.toString();
+    private List<MethodData> processMethods(
+            Class<?> clazz, List<DescriptionStrategy> descriptionStrategies) {
+        return Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> !method.isAnnotationPresent(DocumentedExcluded.class))
+                .map(
+                        method -> {
+                            var description =
+                                    descriptionStrategies.stream()
+                                            .map(strategy -> strategy.getDescription(method))
+                                            .filter(Optional::isPresent)
+                                            .map(Optional::get)
+                                            .findFirst()
+                                            .orElse("");
+                            return new MethodData(
+                                    method.getName(), getMethodSignature(method), description);
+                        })
+                .collect(Collectors.toList());
     }
 
     private List<DescriptionStrategy> getDescriptionStrategies(

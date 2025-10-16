@@ -19,7 +19,7 @@ class TemplateEngineTest {
     void getTemplate_shouldLoadTemplate() throws IOException {
         String templateContent = templateEngine.getTemplate("class.md.template");
         assertNotNull(templateContent);
-        assertTrue(templateContent.contains("{{class.name}}"));
+        assertTrue(templateContent.contains("{{name}}"));
     }
 
     @Test

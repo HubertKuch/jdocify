@@ -6,8 +6,8 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.javadoc.Javadoc;
 import com.github.javaparser.javadoc.JavadocBlockTag;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -16,7 +16,7 @@ public class JavaDocParser {
     private final com.github.javaparser.ast.CompilationUnit compilationUnit;
 
     public JavaDocParser(String filePath) throws IOException {
-        this.compilationUnit = StaticJavaParser.parse(new File(filePath));
+        this.compilationUnit = StaticJavaParser.parse(Paths.get(filePath));
     }
 
     public Optional<String> getClassJavaDoc(String className) {

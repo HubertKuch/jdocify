@@ -85,3 +85,11 @@ tasks.named('test') {
         showStandardStreams = true
     }
 }
+
+task printTestResources {
+    doLast {
+        sourceSets.test.resources.srcDirs.each {
+            println "Test resource dir: ${it}"
+        }
+    }
+}

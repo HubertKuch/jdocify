@@ -58,8 +58,12 @@ public class ModelManager {
         }
 
         log.info("Initializing AiDocGenerator with model path: {}", modelPath);
-        var modelParameters = new ModelParameters().setModel(modelPath);
-
-        return Optional.of(new AiDocGenerator(modelParameters));
+        try {
+            var modelParameters = new ModelParameters().setModel(modelPath);
+            return Optional.of(new AiDocGenerator(modelParameters));
+        } catch (Exception e) {
+            log.error("Failed to load model from path: {}. Error: {}", modelPath, e.getMessage());
+            return Optional.empty();
+        }
     }
 }

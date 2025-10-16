@@ -53,10 +53,11 @@ tasks.processResources {
 
     inputs.properties(props)
     filteringCharset = "UTF-8"
-    filesMatching("config.properties") {
+    filesMatching("default.properties") {
         expand(props)
     }
 }
+
 tasks.named('check') {
     dependsOn(spotlessCheck)
 }

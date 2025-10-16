@@ -1,8 +1,9 @@
 package pl.hubertkuch.jdocify.settings;
 
 import org.aeonbits.owner.Config;
+import pl.hubertkuch.jdocify.integrations.Integration;
 
-@Config.Sources({"classpath:config.properties"})
+@Config.Sources({"file:~/.jdocify/config.properties", "classpath:default.properties"})
 public interface DocifySettings extends Config {
     @Config.Key("jdocify.scanPackage")
     String getScanPackage();
@@ -15,4 +16,9 @@ public interface DocifySettings extends Config {
 
     @Config.Key("jdocify.ai.downloadUrl")
     String getModelDownloadUrl();
+
+    @Key("jdocify.integration.class")
+    @DefaultValue("pl.hubertkuch.jdocify.integrations.VitePressIntegration")
+    @ConverterClass(IntegrationConverter.class)
+    Class<? extends Integration> integrationClass();
 }

@@ -1,16 +1,15 @@
 package pl.hubertkuch.jdocify.ai;
 
 import de.kherud.llama.ModelParameters;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.hubertkuch.jdocify.settings.Settings;
 
 public class ModelManager {
     private static final Logger log = LoggerFactory.getLogger(ModelManager.class);
@@ -28,25 +27,24 @@ public class ModelManager {
     }
 
     public Optional<AiDocGenerator> initAiDocGenerator() {
-        var aiEnabled = Boolean.parseBoolean(System.getProperty("jdocify.ai.enabled", "false"));
-        if (! aiEnabled) {
-            log.info("AI documentation generation is disabled. To enable it, set the 'jdocify.ai.enabled' system property to 'true'.");
+        if (!Settings.get().isAiEnabled()) {
+            log.info(
+                    "AI documentation generation is disabled. To enable it, set the"
+                            + " 'jdocify.ai.enabled' system property to 'true'.");
 
             return Optional.empty();
         }
 
-        var modelPath = System.getProperty("jdocify.modelPath");
-        if (modelPath == null || modelPath.isEmpty()) {
-            modelPath = System.getProperty("user.home") + File.separator + ".jdocify" + File.separator + "models" + File.separator + "model.gguf";
-            log.warn("'jdocify.modelPath' system property is not set. Using default model path: {}", modelPath);
-        }
-
+        var modelPath = Settings.get().getModelPath();
         var modelFile = new File(modelPath);
-        if (! modelFile.exists()) {
+
+        if (!modelFile.exists()) {
             log.warn("Model file not found at path: {}", modelPath);
-            var downloadUrl = System.getProperty("jdocify.model.downloadUrl");
+            var downloadUrl = Settings.get().getModelDownloadUrl();
             if (downloadUrl == null || downloadUrl.isEmpty()) {
-                log.error("Model download URL is not specified. Please set the" + " 'jdocify.model.downloadUrl' system property.");
+                log.error(
+                        "Model download URL is not specified. Please set the"
+                                + " 'jdocify.model.downloadUrl' system property.");
 
                 return Optional.empty();
             }

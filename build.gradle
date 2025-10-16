@@ -15,6 +15,7 @@ dependencies {
     implementation 'org.reflections:reflections:0.10.2'
     runtimeOnly 'org.slf4j:slf4j-simple:1.7.32'
     implementation 'com.github.javaparser:javaparser-core:3.25.5'
+    implementation "org.aeonbits.owner:owner:1.0.12"
 }
 
 spotless {
@@ -43,6 +44,16 @@ spotless {
     }
 }
 
+tasks.processResources {
+    var props = Map.of("package", project.group)
+
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
+    filesMatching("config.properties") {
+        expand(props)
+    }
+}
+
 tasks.named('check') {
     dependsOn(spotlessCheck)
 }
@@ -51,7 +62,7 @@ tasks.named('build') {
     dependsOn(spotlessApply)
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-parameters"
 }
 

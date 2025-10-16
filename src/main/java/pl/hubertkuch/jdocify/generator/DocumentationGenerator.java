@@ -21,6 +21,7 @@ import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.DescriptionStrategy;
 import pl.hubertkuch.jdocify.description.JavaDocDescriptionStrategy;
 import pl.hubertkuch.jdocify.parser.JavaDocParser;
+import pl.hubertkuch.jdocify.settings.Settings;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
@@ -39,13 +40,14 @@ public class DocumentationGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        var packageToScan = System.getProperty("jdocify.scanPackage");
+        var packageToScan = Settings.get().getScanPackage();
         if (packageToScan == null || packageToScan.isEmpty()) {
             log.error("Error: The package to scan was not specified.");
             log.error(
-                    "Please configure the 'jdocify.scanPackage' system property in your build"
-                            + " configuration.");
-            System.exit(1);
+                    "Please configure the 'jdocify.scanPackage' in your config.properties file or"
+                            + " as a system property.");
+
+            return;
         }
 
         log.info("Scanning for @Documented classes in package: {}", packageToScan);

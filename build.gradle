@@ -11,4 +11,21 @@ repositories {
 
 dependencies {
     implementation 'de.kherud:llama:4.2.0'
+    implementation 'org.reflections:reflections:0.10.2'
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.32'
+    implementation 'com.github.javaparser:javaparser-core:3.25.5'
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-parameters"
+}
+
+tasks.register('jdocify', JavaExec) {
+    systemProperty 'jdocify.scanPackage', project.group
+    systemProperty 'jdocify.modelPath', System.getProperty('jdocify.modelPath')
+
+    group = "Documentation"
+    description = "Generates documentation using JDocify."
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'pl.hubertkuch.jdocify.generator.DocumentationGenerator'
 }

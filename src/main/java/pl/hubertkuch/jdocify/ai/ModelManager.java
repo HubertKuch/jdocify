@@ -8,6 +8,7 @@ import pl.hubertkuch.jdocify.utils.FancyFileDownloader;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -84,7 +85,7 @@ public class ModelManager {
         log.info("Preparing to download model from {} to {}", url, path);
         Files.createDirectories(path.getParent());
 
-        URL modelUrl = new URL(url);
+        URL modelUrl = URI.create(url).toURL();
         if ("file".equalsIgnoreCase(modelUrl.getProtocol())) {
             // If it's a local file URL, just copy it
             Path sourcePath;
@@ -127,14 +128,14 @@ public class ModelManager {
                 return false;
             }
 
-            URL modelUrl = new URL(url);
+            URL modelUrl = URI.create(url).toURL();
             if ("file".equalsIgnoreCase(modelUrl.getProtocol())) {
                 // For local file URLs, just check existence and regularity
                 log.info("Model validation successful for local file. File exists and is regular.");
                 return true;
             }
 
-            final var connection = (HttpURLConnection) new URL(url).openConnection();
+            final var connection = (HttpURLConnection) URI.create(url).toURL().openConnection();
             connection.setRequestMethod("HEAD");
             final var responseCode = connection.getResponseCode();
 

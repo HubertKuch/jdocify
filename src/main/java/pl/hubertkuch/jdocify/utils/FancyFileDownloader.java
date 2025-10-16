@@ -7,6 +7,7 @@ import org.slf4j.MDC;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.text.CharacterIterator;
@@ -32,7 +33,7 @@ public class FancyFileDownloader {
         log.info("Download initiated.");
 
         try {
-            URL url = new URL(fileUrl);
+            URL url = URI.create(fileUrl).toURL();
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
             int responseCode = httpConn.getResponseCode();
 

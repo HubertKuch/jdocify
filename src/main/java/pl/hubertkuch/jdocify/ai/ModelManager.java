@@ -8,10 +8,12 @@ import pl.hubertkuch.jdocify.utils.FancyFileDownloader;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 public class ModelManager {
@@ -81,7 +83,22 @@ public class ModelManager {
     private void downloadModel(final String url, final Path path) throws IOException {
         log.info("Preparing to download model from {} to {}", url, path);
         Files.createDirectories(path.getParent());
-        FancyFileDownloader.downloadFile(url, path);
+
+        URL modelUrl = new URL(url);
+        if ("file".equalsIgnoreCase(modelUrl.getProtocol())) {
+            // If it's a local file URL, just copy it
+            Path sourcePath;
+            try {
+                sourcePath = Paths.get(modelUrl.toURI());
+            } catch (URISyntaxException e) {
+                throw new IOException("Invalid URI for local model file: " + url, e);
+            }
+            Files.copy(sourcePath, path, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Model copied from local path successfully.");
+        } else {
+            // For http/https, use FancyFileDownloader
+            FancyFileDownloader.downloadFile(url, path);
+        }
     }
 
     private boolean deleteFile(final Path path) {
@@ -108,6 +125,13 @@ public class ModelManager {
             if (! Files.exists(localPath) || ! Files.isRegularFile(localPath)) {
                 log.warn("Validation failed: Model file does not exist or is not a regular file.");
                 return false;
+            }
+
+            URL modelUrl = new URL(url);
+            if ("file".equalsIgnoreCase(modelUrl.getProtocol())) {
+                // For local file URLs, just check existence and regularity
+                log.info("Model validation successful for local file. File exists and is regular.");
+                return true;
             }
 
             final var connection = (HttpURLConnection) new URL(url).openConnection();

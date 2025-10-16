@@ -6,9 +6,21 @@ import pl.hubertkuch.jdocify.annotations.DocumentedExcluded;
 @Documented(name = "Registration Controller", description = "Handles user registration requests.")
 public class RegistrationController {
 
+    private EmailService emailService;
+
     public boolean registerUser(String username, String password) {
-        // ... implementation ...
+        makeUser();
+        saveUser();
+        sendVerificationEmail();
+        someInternalMethod();
         return true;
+    }
+
+    private void makeUser() {}
+    private void saveUser() {}
+
+    private void sendVerificationEmail() {
+
     }
 
     @DocumentedExcluded

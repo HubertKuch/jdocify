@@ -9,7 +9,10 @@ public class Settings {
         if (instance == null) {
             instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
         }
-
         return instance;
+    }
+
+    public static synchronized void reset() {
+        instance = null;
     }
 }

@@ -12,7 +12,7 @@ class DefaultTemplateEngineTest {
 
     @BeforeEach
     void setUp() {
-        defaultTemplateEngine = DefaultTemplateEngine.createTemplateEngine();
+        defaultTemplateEngine = new DefaultTemplateEngine();
     }
 
     @Test

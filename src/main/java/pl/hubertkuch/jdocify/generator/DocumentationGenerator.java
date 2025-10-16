@@ -32,6 +32,7 @@ import pl.hubertkuch.jdocify.parser.JavaDocParser;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.settings.Settings;
 import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
+import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
@@ -39,18 +40,19 @@ import pl.hubertkuch.jdocify.vo.MethodData;
 import pl.hubertkuch.jdocify.vo.StoryData;
 import pl.hubertkuch.jdocify.vo.StoryStepData;
 import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
+import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 public class DocumentationGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentationGenerator.class);
 
-    private final DefaultTemplateEngine defaultTemplateEngine;
-    private final DefaultDocumentationWriter defaultDocumentationWriter;
+    private final TemplateEngine templateEngine;
+    private final DocumentationWriter documentationWriter;
     private final ModelManager modelManager;
 
     public DocumentationGenerator() {
-        this.defaultTemplateEngine = DefaultTemplateEngine.createTemplateEngine();
-        this.defaultDocumentationWriter = new DefaultDocumentationWriter();
+        this.templateEngine = new DefaultTemplateEngine();
+        this.documentationWriter = new DefaultDocumentationWriter();
         this.modelManager = new ModelManager();
     }
 
@@ -86,7 +88,7 @@ public class DocumentationGenerator {
     }
 
     public void generate(Set<Class<?>> classes) throws IOException {
-        var markdownRenderer = new DefaultMarkdownRenderer(defaultTemplateEngine);
+        var markdownRenderer = new DefaultMarkdownRenderer(templateEngine);
         Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
 
         try {
@@ -98,7 +100,7 @@ public class DocumentationGenerator {
                 var classData = processClass(clazz, javaDocParser, getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
 
                 var renderedTemplate = markdownRenderer.render(classData);
-                defaultDocumentationWriter.write(clazz.getSimpleName(), renderedTemplate);
+                documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
             }
         } finally {
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
@@ -106,7 +108,7 @@ public class DocumentationGenerator {
     }
 
     public void generateStories(Set<Class<?>> storyClasses) throws IOException {
-        var markdownRenderer = new DefaultMarkdownRenderer(defaultTemplateEngine);
+        var markdownRenderer = new DefaultMarkdownRenderer(templateEngine);
         Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
 
         try {
@@ -119,17 +121,17 @@ public class DocumentationGenerator {
                     continue;
                 }
 
-                var storyData = processStory(storyClass, documentedStoryAnnotation, aiDocGeneratorOptional);
+                var storyData = processStory(documentedStoryAnnotation, aiDocGeneratorOptional);
 
                 var renderedTemplate = markdownRenderer.render(storyData); // New render method in DefaultMarkdownRenderer
-                defaultDocumentationWriter.write(documentedStoryAnnotation.name(), renderedTemplate);
+                documentationWriter.write(documentedStoryAnnotation.name(), renderedTemplate);
             }
         } finally {
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
         }
     }
 
-    private StoryData processStory(Class<?> storyClass, DocumentedStory documentedStoryAnnotation, Optional<AiDocGenerator> aiDocGeneratorOptional) throws IOException {
+    private StoryData processStory(DocumentedStory documentedStoryAnnotation, Optional<AiDocGenerator> aiDocGeneratorOptional) throws IOException {
 
         var storyName = documentedStoryAnnotation.name();
         List<StoryStepData> storyStepsData = new ArrayList<>();

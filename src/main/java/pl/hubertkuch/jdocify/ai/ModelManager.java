@@ -3,7 +3,6 @@ package pl.hubertkuch.jdocify.ai;
 import de.kherud.llama.ModelParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.hubertkuch.jdocify.settings.DocifySettings;
 import pl.hubertkuch.jdocify.settings.Settings;
 import pl.hubertkuch.jdocify.utils.FancyFileDownloader;
 
@@ -28,19 +27,19 @@ public class ModelManager {
     }
 
     private Optional<Path> prepareModelFile() {
-        final DocifySettings settings = Settings.get();
-        final Path modelPath = Paths.get(settings.getModelPath());
-        final String downloadUrl = settings.getModelDownloadUrl();
+        final var settings = Settings.get();
+        final var modelPath = Paths.get(settings.getModelPath());
+        final var downloadUrl = settings.getModelDownloadUrl();
 
         if (Files.exists(modelPath)) {
             log.info("Model file found at path: {}. Validating...", modelPath);
             if (validateModel(downloadUrl, modelPath)) {
-                return Optional.of(modelPath);
+                return Optional.of(modelPath); // Happy path: file exists and is valid.
             }
 
             log.warn("Existing model file is corrupt or invalid. Deleting and preparing for re-download.");
             if (! deleteFile(modelPath)) {
-                return Optional.empty();
+                return Optional.empty(); // Critical error: can't delete corrupt file.
             }
         }
 
@@ -111,17 +110,17 @@ public class ModelManager {
                 return false;
             }
 
-            final HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            final var connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod("HEAD");
-            final int responseCode = connection.getResponseCode();
+            final var responseCode = connection.getResponseCode();
 
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 log.warn("Validation failed: Could not get model metadata. Server responded with code {}.", responseCode);
                 return false;
             }
 
-            final long expectedSize = connection.getContentLengthLong();
-            final long actualSize = Files.size(localPath);
+            final var expectedSize = connection.getContentLengthLong();
+            final var actualSize = Files.size(localPath);
 
             if (expectedSize == - 1) {
                 log.warn("Validation skipped: Server did not provide a Content-Length header.");

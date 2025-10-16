@@ -1,6 +1,5 @@
 package pl.hubertkuch.jdocify.generator;
 
-import de.kherud.llama.ModelParameters;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -14,6 +13,7 @@ import org.reflections.scanners.Scanners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.hubertkuch.jdocify.ai.AiDocGenerator;
+import pl.hubertkuch.jdocify.ai.ModelManager;
 import pl.hubertkuch.jdocify.annotations.Documented;
 import pl.hubertkuch.jdocify.annotations.DocumentedExcluded;
 import pl.hubertkuch.jdocify.description.AiDescriptionStrategy;
@@ -30,10 +30,12 @@ public class DocumentationGenerator {
 
     private final TemplateEngine templateEngine;
     private final DocumentationWriter documentationWriter;
+    private final ModelManager modelManager;
 
     public DocumentationGenerator() {
         this.templateEngine = new TemplateEngine();
         this.documentationWriter = new DocumentationWriter();
+        this.modelManager = new ModelManager();
     }
 
     public static void main(String[] args) throws IOException {
@@ -61,17 +63,19 @@ public class DocumentationGenerator {
     public void generate(Set<Class<?>> classes) throws IOException {
         for (var clazz : classes) {
             log.info("Generating documentation for class: {}", clazz.getName());
+
             var javaDocParser = new JavaDocParser(getFilePath(clazz));
-            var aiDocGenerator = initAiDocGenerator();
-            var descriptionStrategies =
-                    List.of(
-                            new AnnotationDescriptionStrategy(),
-                            new JavaDocDescriptionStrategy(javaDocParser),
-                            new AiDescriptionStrategy(aiDocGenerator));
-            var classData = processClass(clazz, javaDocParser, descriptionStrategies);
+            var aiDocGenerator = modelManager.initAiDocGenerator();
+
+            var classData =
+                    processClass(
+                            clazz,
+                            javaDocParser,
+                            getDescriptionStrategies(javaDocParser, aiDocGenerator));
             var renderedTemplate =
                     templateEngine.render(
                             templateEngine.getTemplate("class.md.template"), classData);
+
             documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
         }
     }
@@ -83,6 +87,7 @@ public class DocumentationGenerator {
             throws IOException {
         var documentedAnnotation = clazz.getAnnotation(Documented.class);
         var classDescription = documentedAnnotation.description();
+
         if (classDescription.isEmpty()) {
             classDescription = javaDocParser.getClassJavaDoc(clazz.getSimpleName()).orElse("");
         }
@@ -94,14 +99,14 @@ public class DocumentationGenerator {
                         ? clazz.getSimpleName()
                         : documentedAnnotation.name());
         data.put("class.description", classDescription);
-        data.put("fields", processFields(clazz, javaDocParser));
-        data.put("constructors", processConstructors(clazz, javaDocParser));
-        data.put("methods", processMethods(clazz, javaDocParser, descriptionStrategies));
+        data.put("fields", processFields(clazz));
+        data.put("constructors", processConstructors(clazz));
+        data.put("methods", processMethods(clazz, descriptionStrategies));
 
         return data;
     }
 
-    private String processFields(Class<?> clazz, JavaDocParser javaDocParser) throws IOException {
+    private String processFields(Class<?> clazz) throws IOException {
         var fieldsBuilder = new StringBuilder();
         var fieldTemplate = templateEngine.getTemplate("field.md.template");
         for (var field : clazz.getDeclaredFields()) {
@@ -117,8 +122,7 @@ public class DocumentationGenerator {
         return fieldsBuilder.toString();
     }
 
-    private String processConstructors(Class<?> clazz, JavaDocParser javaDocParser)
-            throws IOException {
+    private String processConstructors(Class<?> clazz) throws IOException {
         var constructorsBuilder = new StringBuilder();
         var constructorTemplate = templateEngine.getTemplate("constructor.md.template");
         for (var constructor : clazz.getDeclaredConstructors()) {
@@ -133,10 +137,7 @@ public class DocumentationGenerator {
         return constructorsBuilder.toString();
     }
 
-    private String processMethods(
-            Class<?> clazz,
-            JavaDocParser javaDocParser,
-            List<DescriptionStrategy> descriptionStrategies)
+    private String processMethods(Class<?> clazz, List<DescriptionStrategy> descriptionStrategies)
             throws IOException {
         var methodsBuilder = new StringBuilder();
         var methodTemplate = templateEngine.getTemplate("method.md.template");
@@ -163,17 +164,17 @@ public class DocumentationGenerator {
         return methodsBuilder.toString();
     }
 
-    private AiDocGenerator initAiDocGenerator() {
-        var modelPath = System.getProperty("jdocify.modelPath");
-        if (modelPath != null && !modelPath.isEmpty()) {
-            log.info("Initializing AiDocGenerator with model path: {}", modelPath);
-            var modelParameters = new ModelParameters().setModel(modelPath);
+    private List<DescriptionStrategy> getDescriptionStrategies(
+            JavaDocParser javaDocParser, Optional<AiDocGenerator> aiDocGenerator) {
+        List<DescriptionStrategy> strategies = new ArrayList<>();
 
-            return new AiDocGenerator(modelParameters);
-        }
-        log.warn("AiDocGenerator not initialized. 'jdocify.modelPath' system property is not set.");
+        strategies.add(new AnnotationDescriptionStrategy());
+        strategies.add(new JavaDocDescriptionStrategy(javaDocParser));
 
-        return null;
+        aiDocGenerator.ifPresent(
+                docGenerator -> strategies.add(new AiDescriptionStrategy(docGenerator)));
+
+        return strategies;
     }
 
     private String getMethodSignature(Method method) {

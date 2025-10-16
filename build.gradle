@@ -58,6 +58,7 @@ tasks.withType(JavaCompile) {
 tasks.register('jdocify', JavaExec) {
     systemProperty 'jdocify.scanPackage', project.group
     systemProperty 'jdocify.modelPath', System.getProperty('jdocify.modelPath')
+
     group = "Documentation"
     description = "Generates documentation using JDocify."
     classpath = sourceSets.main.runtimeClasspath

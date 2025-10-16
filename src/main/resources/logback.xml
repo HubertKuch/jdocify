@@ -1,0 +1,19 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--
+              The pattern is updated to include color.
+              - %highlight(%-5level): This is the key change. It colors the log level.
+              - %cyan(%thread): An example of coloring another part of the log.
+            -->
+            <pattern>%d{HH:mm:ss.SSS} [%cyan(%thread)] %highlight(%-5level) %logger{36} - %msg %mdc%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
+

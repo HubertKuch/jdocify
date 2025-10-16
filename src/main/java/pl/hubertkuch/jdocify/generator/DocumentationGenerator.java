@@ -95,7 +95,6 @@ public class DocumentationGenerator {
                 documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
             }
         } finally {
-            log.warn("Closing ai agent");
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
         }
     }

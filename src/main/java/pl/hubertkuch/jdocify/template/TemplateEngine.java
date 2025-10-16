@@ -10,12 +10,13 @@ import java.util.stream.Collectors;
 public class TemplateEngine {
 
     public String getTemplate(String templateName) throws IOException {
-        try (var is = getClass().getClassLoader().getResourceAsStream("templates/" + templateName)) {
+        try (var is =
+                getClass().getClassLoader().getResourceAsStream("templates/" + templateName)) {
             if (is == null) {
                 throw new IOException("Template not found: " + templateName);
             }
             try (var isr = new InputStreamReader(is, StandardCharsets.UTF_8);
-                 var reader = new BufferedReader(isr)) {
+                    var reader = new BufferedReader(isr)) {
                 return reader.lines().collect(Collectors.joining(System.lineSeparator()));
             }
         }
@@ -25,6 +26,7 @@ public class TemplateEngine {
         for (var entry : data.entrySet()) {
             template = template.replace("{{" + entry.getKey() + "}}", entry.getValue());
         }
+
         return template;
     }
 }

@@ -2,7 +2,6 @@ package pl.hubertkuch.jdocify.ai;
 
 import de.kherud.llama.InferenceParameters;
 import de.kherud.llama.LlamaModel;
-import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +17,26 @@ public class AiDocGenerator {
     }
 
     public String generateDoc(String signature) {
-        log.error("Generating documentation for method: {}", signature);
-        String prompt = "Generate a short, one-sentence Javadoc description for the following Java method: `" + signature + "`. Do not include the signature in the response.";
-        log.error("Prompt: {}", prompt);
-        InferenceParameters inferenceParameters = new InferenceParameters(prompt);
-        StringBuilder sb = new StringBuilder();
-        for (LlamaOutput output : model.generate(inferenceParameters)) {
+        String prompt =
+                "Generate a short, one-sentence Javadoc description for the following Java method:"
+                        + " `"
+                        + signature
+                        + "`. Do not include the signature in the response.";
+
+        log.info("Generating documentation for method: {}", signature);
+        log.debug("Prompt: {}", prompt);
+
+        var inferenceParameters = new InferenceParameters(prompt);
+        var sb = new StringBuilder();
+
+        for (var output : model.generate(inferenceParameters)) {
             sb.append(output.toString());
         }
+
         String generatedText = sb.toString();
-        log.error("Generated text: {}", generatedText);
+
+        log.debug("Generated text: {}", generatedText);
+
         return generatedText;
     }
 }

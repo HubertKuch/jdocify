@@ -47,6 +47,10 @@ tasks.named('check') {
     dependsOn(spotlessCheck)
 }
 
+tasks.named('build') {
+    dependsOn(spotlessApply)
+}
+
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-parameters"
 }

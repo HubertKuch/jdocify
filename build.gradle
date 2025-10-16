@@ -16,6 +16,8 @@ dependencies {
     runtimeOnly 'org.slf4j:slf4j-simple:1.7.32'
     implementation 'com.github.javaparser:javaparser-core:3.25.5'
     implementation "org.aeonbits.owner:owner:1.0.12"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 }
 
 spotless {
@@ -74,4 +76,8 @@ tasks.register('jdocify', JavaExec) {
     description = "Generates documentation using JDocify."
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'pl.hubertkuch.jdocify.generator.DocumentationGenerator'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

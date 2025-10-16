@@ -5,8 +5,14 @@ import de.kherud.llama.LlamaModel;
 import de.kherud.llama.ModelParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.hubertkuch.jdocify.exceptions.DocGenerationException;
 
-public class AiDocGenerator {
+/**
+ * Generates Java documentation for method signatures using a Llama model.
+ * This class implements AutoCloseable to ensure the underlying model resources are
+ * released properly.
+ */
+public class AiDocGenerator implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(AiDocGenerator.class);
 
@@ -16,48 +22,81 @@ public class AiDocGenerator {
         this.model = new LlamaModel(modelParameters);
     }
 
-    public String generateDoc(String signature) {
-        String prompt =
-                "Generate a short, one-sentence description for the following method:"
-                        + " `"
-                        + signature
-                        + "`. Do not include the signature in the response. For example: getUsers() into Find all users";
+    /**
+     * Generates a single, concise Javadoc sentence for a given method signature.
+     *
+     * @param signature The full method signature to document.
+     * @return A clean, single-sentence Javadoc description.
+     * @throws DocGenerationException if the model fails to generate a response.
+     */
+    public String generateDoc(String signature) throws DocGenerationException {
+        String prompt = buildPrompt(signature);
 
-        log.info("Generating documentation for method: {}", signature);
-        log.debug("Prompt: {}", prompt);
+        log.debug("Generating documentation for method: {}", signature);
+        log.trace("Full prompt for model: {}", prompt);
 
         var inferenceParameters = new InferenceParameters(prompt).setNPredict(128)
                                                                  .setTemperature(0.4f);
 
-        var sb = new StringBuilder();
+        var responseBuilder = new StringBuilder();
 
         log.debug("Starting AI model generation for signature: {}", signature);
         try {
             for (var output : model.generate(inferenceParameters)) {
-                sb.append(output.toString());
-                log.trace("Generated chunk: {}", output);
+                responseBuilder.append(output);
             }
             log.debug("AI model generation completed for signature: {}", signature);
         } catch (Exception e) {
-            log.error("Error during AI model generation for signature {}: {}", signature, e.getMessage(), e);
-            return "";
+            throw new DocGenerationException("Error during AI model generation for signature: " + signature, e);
         }
 
-        String generatedText = sb.toString();
+        String processedText = processGeneratedText(responseBuilder.toString());
+        log.debug("Processed generated text: {}", processedText);
 
-        generatedText = generatedText.replace("<|file_separator|>", "").trim();
-        if (generatedText.length() > 200) { // Truncate to a reasonable length
-            generatedText = generatedText.substring(0, 200) + "...";
-        }
-
-        log.debug("Processed generated text: {}", generatedText);
-
-        return generatedText;
+        return processedText;
     }
 
+    private String buildPrompt(String signature) {
+        return """
+                Generate a short, one-sentence Javadoc description for the following Java method.
+                Do not include the method signature in the response. End the sentence with a period.
+                
+                Example 1:
+                Method: `public List<User> getUsers()`
+                Response: Finds all users.
+                
+                Example 2:
+                Method: `public void saveUser(User user)`
+                Response: Saves a user object.
+                
+                Now, generate the response for this method:
+                Method: `%s`
+                Response: \
+                """.formatted(signature).stripIndent();
+    }
+
+    /**
+     * Cleans and truncates the raw model output to a safe, single sentence.
+     */
+    private String processGeneratedText(String rawText) {
+        String cleanedText = rawText.replace("<|file_separator|>", "").trim();
+
+        int firstPeriod = cleanedText.indexOf('.');
+        if (firstPeriod != - 1) {
+            return cleanedText.substring(0, firstPeriod + 1);
+        }
+
+        return cleanedText;
+    }
+
+    @Override
     public void close() {
         log.debug("Attempting to close LlamaModel.");
-        model.close();
-        log.debug("LlamaModel closed successfully.");
+        try {
+            model.close();
+            log.debug("LlamaModel closed successfully.");
+        } catch (Exception e) {
+            log.error("Failed to close LlamaModel cleanly.", e);
+        }
     }
 }

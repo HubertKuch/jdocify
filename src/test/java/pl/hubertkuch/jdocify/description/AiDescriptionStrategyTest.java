@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.hubertkuch.jdocify.ai.AiDocGenerator;
+import pl.hubertkuch.jdocify.exceptions.DocGenerationException;
+
 import java.lang.reflect.Method;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +33,7 @@ class AiDescriptionStrategyTest {
     }
 
     @Test
-    void getDescription_shouldReturnDescriptionFromAiGenerator() throws NoSuchMethodException {
+    void getDescription_shouldReturnDescriptionFromAiGenerator() throws NoSuchMethodException, DocGenerationException {
         Method method = SampleClass.class.getMethod("sampleMethod");
         when(aiDocGenerator.generateDoc(anyString())).thenReturn("This is an AI-generated description.");
 

@@ -1,1 +1,1 @@
-* `{{field.name}}`: {{field.type}}
+* `{{name}}`: {{type}}

@@ -1,14 +1,12 @@
 package pl.hubertkuch.jdocify.renderer;
 
+import java.io.IOException;
+import java.util.stream.Collectors;
+import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
-import pl.hubertkuch.jdocify.template.TemplateEngine;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class MarkdownRenderer {
 
@@ -19,29 +17,36 @@ public class MarkdownRenderer {
     }
 
     public String render(ClassData classData) throws IOException {
-        String fields = classData.fields().stream().map(this::renderField).collect(Collectors.joining("\n"));
-        String constructors = classData.constructors().stream().map(this::renderConstructor).collect(Collectors.joining("\n"));
-        String methods = classData.methods().stream().map(this::renderMethod).collect(Collectors.joining("\n"));
+        String fieldsContent =
+                classData.fields().stream()
+                        .map(this::renderField)
+                        .collect(Collectors.joining("\n"));
+        String constructorsContent =
+                classData.constructors().stream()
+                        .map(this::renderConstructor)
+                        .collect(Collectors.joining("\n"));
+        String methodsContent =
+                classData.methods().stream()
+                        .map(this::renderMethod)
+                        .collect(Collectors.joining("\n"));
 
-        // This is not ideal, as we are back to using a map.
-        // I will improve this when I refactor the TemplateEngine.
-        var data = Map.of(
-                "name", classData.name(),
-                "description", classData.description(),
-                "fields", fields,
-                "constructors", constructors,
-                "methods", methods
-        );
+        var renderedClassData =
+                new ClassData(classData.name(), classData.description(), null, null, null);
 
-        return templateEngine.render(templateEngine.getTemplate("class.md.template"), data);
+        String classTemplate = templateEngine.getTemplate("class.md.template");
+        String renderedTemplate = templateEngine.render(classTemplate, renderedClassData);
+
+        renderedTemplate = renderedTemplate.replace("{{fields}}", fieldsContent);
+        renderedTemplate = renderedTemplate.replace("{{constructors}}", constructorsContent);
+        renderedTemplate = renderedTemplate.replace("{{methods}}", methodsContent);
+
+        return renderedTemplate;
     }
 
     private String renderField(FieldData fieldData) {
         try {
-            return templateEngine.render(templateEngine.getTemplate("field.md.template"), Map.of(
-                    "field.name", fieldData.name(),
-                    "field.type", fieldData.type()
-            ));
+            return templateEngine.render(
+                    templateEngine.getTemplate("field.md.template"), fieldData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -49,9 +54,8 @@ public class MarkdownRenderer {
 
     private String renderConstructor(ConstructorData constructorData) {
         try {
-            return templateEngine.render(templateEngine.getTemplate("constructor.md.template"), Map.of(
-                    "constructor.signature", constructorData.signature()
-            ));
+            return templateEngine.render(
+                    templateEngine.getTemplate("constructor.md.template"), constructorData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -59,11 +63,8 @@ public class MarkdownRenderer {
 
     private String renderMethod(MethodData methodData) {
         try {
-            return templateEngine.render(templateEngine.getTemplate("method.md.template"), Map.of(
-                    "method.name", methodData.name(),
-                    "method.signature", methodData.signature(),
-                    "method.description", methodData.description()
-            ));
+            return templateEngine.render(
+                    templateEngine.getTemplate("method.md.template"), methodData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

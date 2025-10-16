@@ -1,6 +1,6 @@
-### {{method.name}}
+### {{name}}
 
-`{{method.signature}}`
+`{{signature}}`
 
-{{method.description}}
+{{description}}
 

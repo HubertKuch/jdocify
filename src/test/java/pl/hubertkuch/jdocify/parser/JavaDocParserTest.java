@@ -17,6 +17,7 @@ class JavaDocParserTest {
     @BeforeEach
     void setUp() throws IOException, URISyntaxException {
         URL resource = getClass().getClassLoader().getResource("SampleClass.java");
+        assertNotNull(resource);
         File file = Paths.get(resource.toURI()).toFile();
         javaDocParser = new JavaDocParser(file.getAbsolutePath());
     }

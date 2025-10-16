@@ -21,14 +21,14 @@ import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.DescriptionStrategy;
 import pl.hubertkuch.jdocify.description.JavaDocDescriptionStrategy;
 import pl.hubertkuch.jdocify.parser.JavaDocParser;
+import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
 import pl.hubertkuch.jdocify.settings.Settings;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
-import pl.hubertkuch.jdocify.writer.DocumentationWriter;
-import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
 import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
+import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 public class DocumentationGenerator {
 
@@ -114,15 +114,25 @@ public class DocumentationGenerator {
         return Arrays.stream(clazz.getDeclaredFields())
                 .filter(field -> !field.isAnnotationPresent(DocumentedExcluded.class))
                 .map(field -> new FieldData(field.getName(), field.getType().getSimpleName()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<ConstructorData> processConstructors(Class<?> clazz) {
-        var constructors = Arrays.stream(clazz.getDeclaredConstructors())
-                .filter(constructor -> !constructor.isAnnotationPresent(DocumentedExcluded.class))
-                .map(constructor -> new ConstructorData(getConstructorSignature(constructor)))
-                .collect(Collectors.toList());
-        log.info("Processed {} constructors for class {}: {}", constructors.size(), clazz.getSimpleName(), constructors);
+        var constructors =
+                Arrays.stream(clazz.getDeclaredConstructors())
+                        .filter(
+                                constructor ->
+                                        !constructor.isAnnotationPresent(DocumentedExcluded.class))
+                        .map(
+                                constructor ->
+                                        new ConstructorData(getConstructorSignature(constructor)))
+                        .toList();
+        log.info(
+                "Processed {} constructors for class {}: {}",
+                constructors.size(),
+                clazz.getSimpleName(),
+                constructors);
+
         return constructors;
     }
 
@@ -139,10 +149,11 @@ public class DocumentationGenerator {
                                             .map(Optional::get)
                                             .findFirst()
                                             .orElse("");
+
                             return new MethodData(
                                     method.getName(), getMethodSignature(method), description);
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<DescriptionStrategy> getDescriptionStrategies(

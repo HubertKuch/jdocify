@@ -1,13 +1,13 @@
 package pl.hubertkuch.jdocify.integration;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import pl.hubertkuch.jdocify.ai.ModelManager;
 import pl.hubertkuch.jdocify.settings.Settings;
 
-import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,6 +59,7 @@ class AiModelManagerIntegrationTest {
         Thread.sleep(1000);
 
         URL dummyModelUrl = getClass().getClassLoader().getResource("dummy-model.gguf");
+        Assertions.assertNotNull(dummyModelUrl);
         System.setProperty("jdocify.ai.downloadUrl", dummyModelUrl.toString());
 
         // When

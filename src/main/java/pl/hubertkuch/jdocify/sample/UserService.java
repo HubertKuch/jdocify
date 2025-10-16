@@ -2,13 +2,11 @@ package pl.hubertkuch.jdocify.sample;
 
 import pl.hubertkuch.jdocify.annotations.Documented;
 
-/**
- * A sample service for user operations.
- */
+/** A sample service for user operations. */
 @Documented(name = "User Service")
 public class UserService {
 
-    private String databaseConnection;
+    private final String databaseConnection;
 
     public UserService(String databaseConnection) {
         this.databaseConnection = databaseConnection;

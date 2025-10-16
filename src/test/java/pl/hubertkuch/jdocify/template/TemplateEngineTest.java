@@ -24,15 +24,16 @@ class TemplateEngineTest {
 
     @Test
     void getTemplate_shouldThrowExceptionForNonExistentTemplate() {
-        assertThrows(IOException.class, () -> {
-            templateEngine.getTemplate("nonexistent.template");
-        });
+        assertThrows(IOException.class, () -> templateEngine.getTemplate("nonexistent.template"));
     }
+
+    record TestData(String name) {}
+    record TestDataWithOther(String other) {}
 
     @Test
     void render_shouldReplacePlaceholders() {
         String template = "Hello, {{name}}!";
-        Map<String, String> data = Map.of("name", "World");
+        TestData data = new TestData("World");
         String rendered = templateEngine.render(template, data);
         assertEquals("Hello, World!", rendered);
     }
@@ -40,7 +41,7 @@ class TemplateEngineTest {
     @Test
     void render_shouldNotReplaceMissingPlaceholders() {
         String template = "Hello, {{name}}!";
-        Map<String, String> data = Map.of("other", "World");
+        TestDataWithOther data = new TestDataWithOther("World");
         String rendered = templateEngine.render(template, data);
         assertEquals("Hello, {{name}}!", rendered);
     }

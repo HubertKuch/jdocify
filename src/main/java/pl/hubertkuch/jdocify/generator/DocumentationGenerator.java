@@ -16,6 +16,7 @@ import pl.hubertkuch.jdocify.ai.AiDocGenerator;
 import pl.hubertkuch.jdocify.ai.ModelManager;
 import pl.hubertkuch.jdocify.annotations.Documented;
 import pl.hubertkuch.jdocify.annotations.DocumentedExcluded;
+import pl.hubertkuch.jdocify.annotations.DocumentedStory;
 import pl.hubertkuch.jdocify.description.AiDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.DescriptionStrategy;
@@ -28,7 +29,12 @@ import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
+import pl.hubertkuch.jdocify.vo.StoryData;
+import pl.hubertkuch.jdocify.vo.StoryStepData;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
+
+import java.io.IOException;
+import java.util.*;
 
 public class DocumentationGenerator {
 
@@ -55,16 +61,25 @@ public class DocumentationGenerator {
             return;
         }
 
-        log.info("Scanning for @Documented classes in package: {}", packageToScan);
+        log.info("Scanning for @Documented and @DocumentedStory classes in package: {}", packageToScan);
         var reflections = new Reflections(packageToScan, Scanners.TypesAnnotated);
-        var documentedClasses = reflections.getTypesAnnotatedWith(Documented.class);
 
+        var documentedClasses = reflections.getTypesAnnotatedWith(Documented.class);
         if (documentedClasses.isEmpty()) {
             log.info("No classes found with the @Documented annotation.");
         } else {
             log.info("Found {} documented class(es):", documentedClasses.size());
             new DocumentationGenerator().generate(documentedClasses);
         }
+
+        var documentedStoryClasses = reflections.getTypesAnnotatedWith(DocumentedStory.class);
+        if (documentedStoryClasses.isEmpty()) {
+            log.info("No classes found with the @DocumentedStory annotation.");
+        } else {
+            log.info("Found {} documented story class(es):", documentedStoryClasses.size());
+            new DocumentationGenerator().generateStories(documentedStoryClasses);
+        }
+
         System.exit(0);
     }
 
@@ -91,6 +106,66 @@ public class DocumentationGenerator {
             log.warn("Closing ai agent");
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
         }
+    }
+
+    public void generateStories(Set<Class<?>> storyClasses) throws IOException {
+        var markdownRenderer = new MarkdownRenderer(templateEngine);
+        Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
+
+        try {
+            for (var storyClass : storyClasses) {
+                log.info("Generating documentation for story: {}", storyClass.getName());
+
+                var documentedStoryAnnotation = storyClass.getAnnotation(DocumentedStory.class);
+                if (documentedStoryAnnotation == null) {
+                    log.warn("Class {} is in storyClasses but does not have @DocumentedStory annotation.", storyClass.getName());
+                    continue;
+                }
+
+                var storyData = processStory(storyClass, documentedStoryAnnotation, aiDocGeneratorOptional);
+
+                var renderedTemplate = markdownRenderer.render(storyData); // New render method in MarkdownRenderer
+                documentationWriter.write(documentedStoryAnnotation.name(), renderedTemplate);
+            }
+        } finally {
+            log.warn("Closing ai agent");
+            aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
+        }
+    }
+
+    private StoryData processStory(
+            Class<?> storyClass,
+            DocumentedStory documentedStoryAnnotation,
+            Optional<AiDocGenerator> aiDocGeneratorOptional) throws IOException {
+
+        var storyName = documentedStoryAnnotation.name();
+        List<StoryStepData> storyStepsData = new ArrayList<>();
+
+        for (var storyStepAnnotation : documentedStoryAnnotation.steps()) {
+            if (!storyStepAnnotation.narrative().isEmpty()) {
+                // It's a narrative step
+                storyStepsData.add(new StoryStepData(Optional.of(storyStepAnnotation.narrative()), Optional.empty(), Collections.emptyList()));
+            } else if (!storyStepAnnotation.element().equals(void.class)) {
+                // It's an element step
+                Class<?> elementClass = storyStepAnnotation.element();
+                var javaDocParser = new JavaDocParser(getFilePath(elementClass));
+                var elementClassData = processClass(elementClass, javaDocParser, getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
+
+                List<MethodData> filteredMethodData = new ArrayList<>();
+                if (storyStepAnnotation.methods().length > 0 && elementClassData.methods() != null) {
+                    Set<String> methodNamesToInclude = new HashSet<>(Arrays.asList(storyStepAnnotation.methods()));
+                    filteredMethodData = elementClassData.methods().stream()
+                            .filter(methodData -> methodNamesToInclude.contains(methodData.name()))
+                            .toList();
+                } else if (elementClassData.methods() != null) {
+                    // If no specific methods are mentioned, include all methods
+                    filteredMethodData = elementClassData.methods();
+                }
+
+                storyStepsData.add(new StoryStepData(Optional.empty(), Optional.of(elementClassData), filteredMethodData));
+            }
+        }
+        return new StoryData(storyName, storyStepsData);
     }
 
     private ClassData processClass(
@@ -144,7 +219,8 @@ public class DocumentationGenerator {
     }
 
     private List<MethodData> processMethods(
-            Class<?> clazz, List<DescriptionStrategy> descriptionStrategies) {
+            Class<?> clazz,
+            List<DescriptionStrategy> descriptionStrategies) {
         return Arrays.stream(clazz.getDeclaredMethods())
                 .filter(method -> !method.isAnnotationPresent(DocumentedExcluded.class))
                 .map(

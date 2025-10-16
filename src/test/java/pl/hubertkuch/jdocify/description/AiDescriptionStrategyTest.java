@@ -35,7 +35,7 @@ class AiDescriptionStrategyTest {
     @Test
     void getDescription_shouldReturnDescriptionFromAiGenerator() throws NoSuchMethodException, DocGenerationException {
         Method method = SampleClass.class.getMethod("sampleMethod");
-        when(aiDocGenerator.generateDoc(anyString())).thenReturn("This is an AI-generated description.");
+        when(aiDocGenerator.generateDoc(anyString(), anyString())).thenReturn("This is an AI-generated description.");
 
         Optional<String> description = strategy.getDescription(method);
 

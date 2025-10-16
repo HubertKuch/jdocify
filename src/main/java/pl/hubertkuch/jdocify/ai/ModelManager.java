@@ -59,11 +59,14 @@ public class ModelManager {
 
         log.info("Initializing AiDocGenerator with model path: {}", modelPath);
         try {
+            log.debug("Attempting to create ModelParameters with model path: {}", modelPathStr);
             var modelParameters = new ModelParameters().setModel(modelPathStr);
-
-            return Optional.of(new AiDocGenerator(modelParameters));
+            log.debug("ModelParameters created. Attempting to instantiate LlamaModel.");
+            var aiDocGenerator = new AiDocGenerator(modelParameters);
+            log.debug("LlamaModel instantiated successfully.");
+            return Optional.of(aiDocGenerator);
         } catch (Exception e) {
-            log.error("Failed to load model from path: {}. Error: {}", modelPath, e.getMessage());
+            log.error("Failed to load model from path: {}. Error: {}", modelPath, e.getMessage(), e);
 
             return Optional.empty();
         }

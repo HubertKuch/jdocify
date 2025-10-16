@@ -65,24 +65,31 @@ public class DocumentationGenerator {
             log.info("Found {} documented class(es):", documentedClasses.size());
             new DocumentationGenerator().generate(documentedClasses);
         }
+        System.exit(0);
     }
 
     public void generate(Set<Class<?>> classes) throws IOException {
         var markdownRenderer = new MarkdownRenderer(templateEngine);
-        for (var clazz : classes) {
-            log.info("Generating documentation for class: {}", clazz.getName());
+        Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
 
-            var javaDocParser = new JavaDocParser(getFilePath(clazz));
-            var aiDocGenerator = modelManager.initAiDocGenerator();
+        try {
+            for (var clazz : classes) {
+                log.info("Generating documentation for class: {}", clazz.getName());
 
-            var classData =
-                    processClass(
-                            clazz,
-                            javaDocParser,
-                            getDescriptionStrategies(javaDocParser, aiDocGenerator));
+                var javaDocParser = new JavaDocParser(getFilePath(clazz));
 
-            var renderedTemplate = markdownRenderer.render(classData);
-            documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
+                var classData =
+                        processClass(
+                                clazz,
+                                javaDocParser,
+                                getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
+
+                var renderedTemplate = markdownRenderer.render(classData);
+                documentationWriter.write(clazz.getSimpleName(), renderedTemplate);
+            }
+        } finally {
+            log.warn("Closing ai agent");
+            aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
         }
     }
 

@@ -2,6 +2,10 @@
 
 {{class.description}}
 
+## Constructors
+
+{{constructors}}
+
 ## Fields
 
 {{fields}}

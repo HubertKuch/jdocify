@@ -1,0 +1,11 @@
+# {{class.name}}
+
+{{class.description}}
+
+## Fields
+
+{{fields}}
+
+## Methods
+
+{{methods}}

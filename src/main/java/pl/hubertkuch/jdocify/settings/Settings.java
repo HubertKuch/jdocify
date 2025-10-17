@@ -3,6 +3,8 @@ package pl.hubertkuch.jdocify.settings;
 import org.aeonbits.owner.ConfigFactory;
 import pl.hubertkuch.jdocify.integrations.Integration;
 import pl.hubertkuch.jdocify.integrations.VitePressIntegration;
+import pl.hubertkuch.jdocify.naming.DefaultFileNamer;
+import pl.hubertkuch.jdocify.naming.FileNamer;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
 import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
@@ -11,6 +13,7 @@ import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 public class Settings {
     private static DocifySettings instance;
@@ -18,12 +21,14 @@ public class Settings {
     private static DocumentationWriter documentationWriter;
     private static Integration integration;
     private static MarkdownRenderer markdownRenderer;
+    private static FileNamer fileNamer;
 
     public static synchronized void initialize() {
         setTemplateEngine(new DefaultTemplateEngine());
         setDocumentationWriter(new DefaultDocumentationWriter());
         setMarkdownRenderer(new DefaultMarkdownRenderer(templateEngine()));
         setIntegration(new VitePressIntegration(Path.of(get().getIntegrationOutput())));
+        setFileNamer(new pl.hubertkuch.jdocify.naming.DefaultFileNamer());
     }
 
     public static synchronized DocifySettings get() {
@@ -76,5 +81,13 @@ public class Settings {
 
     public static void setMarkdownRenderer(MarkdownRenderer markdownRenderer) {
         Settings.markdownRenderer = markdownRenderer;
+    }
+
+    public static void setFileNamer(FileNamer fileNamer) {
+        Settings.fileNamer = fileNamer;
+    }
+
+    public static FileNamer fileNamer() {
+        return fileNamer;
     }
 }

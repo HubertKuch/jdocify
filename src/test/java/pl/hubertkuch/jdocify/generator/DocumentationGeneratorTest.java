@@ -10,13 +10,19 @@ import pl.hubertkuch.jdocify.vo.ConstructorData;
 import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
 
+import pl.hubertkuch.jdocify.writer.DocumentationWriter;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class DocumentationGeneratorTest {
 
@@ -107,5 +113,22 @@ public class DocumentationGeneratorTest {
         Method method = DocumentationGenerator.class.getDeclaredMethod("processMethods", Class.class, List.class);
         method.setAccessible(true);
         return (List<MethodData>) method.invoke(documentationGenerator, clazz, Collections.emptyList());
+    }
+
+    @Test
+    public void testCustomSourcePath() throws Exception {
+        // given
+        System.setProperty("jdocify.source.paths", "src/test/custom_src");
+        Settings.reset(); // force reload of settings
+        DocumentationWriter mockWriter = mock(DocumentationWriter.class);
+        Settings.setDocumentationWriter(mockWriter);
+        documentationGenerator = new DocumentationGenerator();
+        Set<Class<?>> classes = Set.of(com.example.MyCustomClass.class);
+
+        // when
+        documentationGenerator.generate(classes);
+
+        // then
+        verify(mockWriter).write(anyString(), anyString());
     }
 }

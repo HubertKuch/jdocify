@@ -19,4 +19,8 @@ public interface DocifySettings extends Config {
 
     @Config.Key("jdocify.ai.downloadUrl")
     String getModelDownloadUrl();
+
+    @Config.Key("jdocify.source.paths")
+    @Config.DefaultValue("src/main/java")
+    String[] getSourcePaths();
 }

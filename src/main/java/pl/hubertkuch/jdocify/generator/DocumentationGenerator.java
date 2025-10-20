@@ -218,8 +218,15 @@ public class DocumentationGenerator {
     }
 
     private String getFilePath(Class<?> clazz) {
-        return "src" + File.separator + "main" + File.separator + "java" + File.separator + clazz
-                .getName()
-                .replace(".", File.separator) + ".java";
+        String[] sourcePaths = Settings.get().getSourcePaths();
+        String classPath = clazz.getName().replace(".", File.separator) + ".java";
+        for (String sourcePath : sourcePaths) {
+            String fullPath = sourcePath + File.separator + classPath;
+            File file = new File(fullPath);
+            if (file.exists()) {
+                return fullPath;
+            }
+        }
+        throw new RuntimeException("Source file not found for class: " + clazz.getName());
     }
 }

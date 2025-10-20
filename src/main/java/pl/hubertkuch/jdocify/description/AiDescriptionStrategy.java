@@ -9,7 +9,7 @@ import pl.hubertkuch.jdocify.utils.MethodBodyExtractor;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-public class AiDescriptionStrategy implements DescriptionStrategy {
+public class AiDescriptionStrategy implements DescriptionStrategy<Method> {
 
     private static final Logger log = LoggerFactory.getLogger(AiDescriptionStrategy.class);
 

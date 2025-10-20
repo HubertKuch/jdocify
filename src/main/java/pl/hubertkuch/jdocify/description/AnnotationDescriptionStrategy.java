@@ -5,7 +5,7 @@ import pl.hubertkuch.jdocify.annotations.DocumentedMethod;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-public class AnnotationDescriptionStrategy implements DescriptionStrategy {
+public class AnnotationDescriptionStrategy implements DescriptionStrategy<Method> {
     @Override
     public Optional<String> getDescription(Method method) {
         if (method.isAnnotationPresent(DocumentedMethod.class)) {

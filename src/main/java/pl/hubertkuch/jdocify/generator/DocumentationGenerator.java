@@ -141,7 +141,7 @@ public class DocumentationGenerator {
         return new StoryData(storyName, storyStepsData);
     }
 
-    private ClassData processClass(Class<?> clazz, JavaDocParser javaDocParser, List<DescriptionStrategy> descriptionStrategies) {
+    private ClassData processClass(Class<?> clazz, JavaDocParser javaDocParser, List<DescriptionStrategy<Method>> descriptionStrategies) {
         var documentedAnnotation = clazz.getAnnotation(Documented.class);
         var classDescription = documentedAnnotation.description();
 
@@ -173,7 +173,7 @@ public class DocumentationGenerator {
         return constructors;
     }
 
-    private List<MethodData> processMethods(Class<?> clazz, List<DescriptionStrategy> descriptionStrategies) {
+    private List<MethodData> processMethods(Class<?> clazz, List<DescriptionStrategy<Method>> descriptionStrategies) {
         return Arrays
                 .stream(clazz.getDeclaredMethods())
                 .filter(memberFilter::filterMethod)
@@ -191,8 +191,8 @@ public class DocumentationGenerator {
                 .toList();
     }
 
-    private List<DescriptionStrategy> getDescriptionStrategies(JavaDocParser javaDocParser, Optional<AiDocGenerator> aiDocGenerator) {
-        List<DescriptionStrategy> strategies = new ArrayList<>();
+    private List<DescriptionStrategy<Method>> getDescriptionStrategies(JavaDocParser javaDocParser, Optional<AiDocGenerator> aiDocGenerator) {
+        List<DescriptionStrategy<Method>> strategies = new ArrayList<>();
 
         strategies.add(new AnnotationDescriptionStrategy());
         strategies.add(new JavaDocDescriptionStrategy(javaDocParser));

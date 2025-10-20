@@ -1,6 +1,8 @@
 package pl.hubertkuch.jdocify.settings;
 
 import org.aeonbits.owner.ConfigFactory;
+import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
+import pl.hubertkuch.jdocify.filter.MemberFilter;
 import pl.hubertkuch.jdocify.integrations.Integration;
 import pl.hubertkuch.jdocify.integrations.VitePressIntegration;
 import pl.hubertkuch.jdocify.naming.FileNamer;
@@ -20,6 +22,7 @@ public class Settings {
     private static Integration integration;
     private static MarkdownRenderer markdownRenderer;
     private static FileNamer fileNamer;
+    private static MemberFilter memberFilter;
 
     public static synchronized void initialize() {
         setTemplateEngine(new DefaultTemplateEngine());
@@ -27,6 +30,7 @@ public class Settings {
         setMarkdownRenderer(new DefaultMarkdownRenderer(templateEngine()));
         setIntegration(new VitePressIntegration(Path.of(get().getIntegrationOutput())));
         setFileNamer(new pl.hubertkuch.jdocify.naming.DefaultFileNamer());
+        setMemberFilter(new DefaultMemberFilter());
     }
 
     public static synchronized DocifySettings get() {
@@ -87,5 +91,13 @@ public class Settings {
 
     public static FileNamer fileNamer() {
         return fileNamer;
+    }
+
+    public static MemberFilter memberFilter() {
+        return memberFilter;
+    }
+
+    public static void setMemberFilter(MemberFilter memberFilter) {
+        Settings.memberFilter = memberFilter;
     }
 }

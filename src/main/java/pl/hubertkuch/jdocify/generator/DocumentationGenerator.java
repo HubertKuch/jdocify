@@ -28,6 +28,7 @@ import pl.hubertkuch.jdocify.description.AiDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.DescriptionStrategy;
 import pl.hubertkuch.jdocify.description.JavaDocDescriptionStrategy;
+import pl.hubertkuch.jdocify.filter.MemberFilter;
 import pl.hubertkuch.jdocify.naming.FileNamer;
 import pl.hubertkuch.jdocify.parser.JavaDocParser;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
@@ -51,6 +52,7 @@ public class DocumentationGenerator {
     private final DocumentationWriter documentationWriter;
     private final ModelManager modelManager;
     private final FileNamer fileNamer;
+    private final MemberFilter memberFilter;
 
     public DocumentationGenerator() {
         this.modelManager = new ModelManager();
@@ -58,6 +60,7 @@ public class DocumentationGenerator {
         this.templateEngine = Settings.templateEngine();
         this.documentationWriter = Settings.documentationWriter();
         this.fileNamer = Settings.fileNamer();
+        this.memberFilter = Settings.memberFilter();
     }
 
     public static void main(String[] args) throws IOException {
@@ -184,9 +187,7 @@ public class DocumentationGenerator {
     private List<FieldData> processFields(Class<?> clazz) {
         return Arrays
                 .stream(clazz.getDeclaredFields())
-                .filter(field -> ! field.isAnnotationPresent(DocumentedExcluded.class))
-                .filter(field -> ! Modifier.isPrivate(field.getModifiers()))
-
+                .filter(memberFilter::filterField)
                 .map(field -> new FieldData(field.getName(), field.getType().getSimpleName()))
                 .toList();
     }
@@ -194,9 +195,7 @@ public class DocumentationGenerator {
     private List<ConstructorData> processConstructors(Class<?> clazz) {
         var constructors = Arrays
                 .stream(clazz.getDeclaredConstructors())
-                .filter(constructor -> ! constructor.isAnnotationPresent(DocumentedExcluded.class))
-                .filter(constructor -> ! Modifier.isPrivate(constructor.getModifiers()))
-
+                .filter(memberFilter::filterConstructor)
                 .map(constructor -> new ConstructorData(getConstructorSignature(constructor)))
                 .toList();
         log.info("Processed {} constructors for class {}: {}", constructors.size(), clazz.getSimpleName(), constructors);
@@ -207,8 +206,7 @@ public class DocumentationGenerator {
     private List<MethodData> processMethods(Class<?> clazz, List<DescriptionStrategy> descriptionStrategies) {
         return Arrays
                 .stream(clazz.getDeclaredMethods())
-                .filter(method -> ! method.isAnnotationPresent(DocumentedExcluded.class))
-                .filter(method -> ! Modifier.isPrivate(method.getModifiers()))
+                .filter(memberFilter::filterMethod)
                 .map(method -> {
                     var description = descriptionStrategies
                             .stream()

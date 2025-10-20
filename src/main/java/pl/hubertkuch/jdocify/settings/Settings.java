@@ -3,7 +3,6 @@ package pl.hubertkuch.jdocify.settings;
 import org.aeonbits.owner.ConfigFactory;
 import pl.hubertkuch.jdocify.integrations.Integration;
 import pl.hubertkuch.jdocify.integrations.VitePressIntegration;
-import pl.hubertkuch.jdocify.naming.DefaultFileNamer;
 import pl.hubertkuch.jdocify.naming.FileNamer;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
@@ -13,7 +12,6 @@ import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 import java.nio.file.Path;
-import java.util.Set;
 
 public class Settings {
     private static DocifySettings instance;

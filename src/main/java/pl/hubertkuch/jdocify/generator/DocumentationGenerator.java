@@ -63,36 +63,6 @@ public class DocumentationGenerator {
         this.memberFilter = Settings.memberFilter();
     }
 
-    public static void main(String[] args) throws IOException {
-        var packageToScan = Settings.get().getScanPackage();
-        if (packageToScan == null || packageToScan.isEmpty()) {
-            log.error("Error: The package to scan was not specified.");
-            log.error("Please configure the 'jdocify.scanPackage' in your config.properties file or" + " as a system property.");
-
-            return;
-        }
-
-        log.info("Scanning for @Documented and @DocumentedStory classes in package: {}", packageToScan);
-        var reflections = new Reflections(packageToScan, Scanners.TypesAnnotated);
-
-        var documentedClasses = reflections.getTypesAnnotatedWith(Documented.class);
-        if (documentedClasses.isEmpty()) {
-            log.info("No classes found with the @Documented annotation.");
-        } else {
-            log.info("Found {} documented class(es):", documentedClasses.size());
-            new DocumentationGenerator().generate(documentedClasses);
-        }
-
-        var documentedStoryClasses = reflections.getTypesAnnotatedWith(DocumentedStory.class);
-        if (documentedStoryClasses.isEmpty()) {
-            log.info("No classes found with the @DocumentedStory annotation.");
-        } else {
-            log.info("Found {} documented story class(es):", documentedStoryClasses.size());
-            new DocumentationGenerator().generateStories(documentedStoryClasses);
-        }
-
-        System.exit(0);
-    }
 
     public void generate(Set<Class<?>> classes) throws IOException {
         var markdownRenderer = new DefaultMarkdownRenderer(templateEngine);

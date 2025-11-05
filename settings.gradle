@@ -1,0 +1,2 @@
+rootProject.name = 'JDocify'
+include 'core', 'plugin'

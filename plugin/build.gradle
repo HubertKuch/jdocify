@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'com.gradle.plugin-publish' version '1.2.1'
+}
+
+group = 'pl.hubertkuch.jdocify'
+version = '0.1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(gradleApi())
+    implementation project(':core')
+
+    implementation 'org.codehaus.groovy:groovy-all:3.0.21'
+
+    implementation 'de.kherud:llama:4.2.0'
+    implementation 'org.reflections:reflections:0.10.2'
+    implementation 'com.github.javaparser:javaparser-core:3.25.5'
+    implementation "org.aeonbits.owner:owner:1.0.12"
+    implementation 'org.apache.commons:commons-lang3:3.0'
+}
+
+gradlePlugin {
+    plugins {
+        register('jdocifyPlugin') {
+            id = 'pl.hubertkuch.jdocify'
+            implementationClass = 'pl.hubertkuch.jdocify.plugin.JDocifyPlugin'
+        }
+    }
+}
+

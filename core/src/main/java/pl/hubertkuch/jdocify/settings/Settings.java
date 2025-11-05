@@ -1,11 +1,14 @@
 package pl.hubertkuch.jdocify.settings;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import org.aeonbits.owner.ConfigFactory;
 import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
 import pl.hubertkuch.jdocify.filter.MemberFilter;
 import pl.hubertkuch.jdocify.integrations.Integration;
 import pl.hubertkuch.jdocify.integrations.VitePressIntegration;
+import pl.hubertkuch.jdocify.naming.DefaultFileNamer;
 import pl.hubertkuch.jdocify.naming.FileNamer;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
@@ -28,13 +31,27 @@ public class Settings {
         setDocumentationWriter(new DefaultDocumentationWriter());
         setMarkdownRenderer(new DefaultMarkdownRenderer(templateEngine()));
         setIntegration(new VitePressIntegration(Path.of(get().getIntegrationOutput())));
-        setFileNamer(new pl.hubertkuch.jdocify.naming.DefaultFileNamer());
+        setFileNamer(new DefaultFileNamer());
         setMemberFilter(new DefaultMemberFilter());
     }
 
     public static synchronized DocifySettings get() {
         if (instance == null) {
-            instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
+            String customConfigFile = System.getProperty("jdocify.configFile");
+
+            if (customConfigFile != null) {
+                Map<String, String> properties = new HashMap<>();
+
+                String allSources = "file:" + customConfigFile
+                        + ",file:~/.jdocify/config.properties"
+                        + ",classpath:default.properties";
+
+                properties.put("owner.sources", allSources);
+
+                instance = ConfigFactory.create(DocifySettings.class, properties);
+            } else {
+                instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
+            }
         }
 
         return instance;

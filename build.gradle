@@ -3,94 +3,13 @@ plugins {
     id("com.diffplug.spotless") version "8.0.0"
 }
 
-group = 'pl.hubertkuch.jdocify'
-version = '0.1.0-SNAPSHOT'
+subprojects {
+    apply plugin: 'java-library'
 
-repositories {
-	mavenCentral()
-}
+    group = 'pl.hubertkuch.jdocify'
+    version = '0.1.0-SNAPSHOT'
 
-sourceSets {
-    test {
-        java {
-            srcDir 'src/test/custom_src'
-        }
-    }
-}
-
-dependencies {
-    implementation 'de.kherud:llama:4.2.0'
-    implementation 'org.reflections:reflections:0.10.2'
-    runtimeOnly 'org.slf4j:slf4j-simple:1.7.32'
-    implementation 'com.github.javaparser:javaparser-core:3.25.5'
-    implementation "org.aeonbits.owner:owner:1.0.12"
-    implementation 'org.apache.commons:commons-lang3:3.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
-    testImplementation 'org.mockito:mockito-core:5.12.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
-}
-
-spotless {
-    ratchetFrom 'origin/main'
-
-    format 'misc', {
-        target '*.gradle', '.gitattributes', '.gitignore'
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-
-    java {
-        target 'src/main/java/**/*.java'
-
-        importOrder()
-        removeUnusedImports()
-
-        googleJavaFormat('1.17.0').aosp().reflowLongStrings()
-
-        custom 'Blank line before return', { content ->
-            content.replaceAll(/([;}])(\r?\n)([ \t]*return)/, '$1$2\n$3')
-        }
-
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-}
-
-tasks.processResources {
-    def props = [projectGroup: project.group]
-
-    inputs.properties(props)
-    filteringCharset = "UTF-8"
-    filesMatching("default.properties") {
-        expand(props)
-    }
-}
-tasks.named('check') {
-    dependsOn(spotlessCheck)
-}
-
-tasks.named('build') {
-    dependsOn(spotlessApply)
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs << "-parameters"
-}
-
-tasks.register('jdocify', JavaExec) {
-    systemProperty 'jdocify.scanPackage', project.group
-    systemProperty 'jdocify.modelPath', System.getProperty('jdocify.modelPath')
-
-    group = "Documentation"
-    description = "Generates documentation using JDocify."
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'pl.hubertkuch.jdocify.generator.DocumentationGenerator'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
-    testLogging {
-        showStandardStreams = true
+    repositories {
+        mavenCentral()
     }
 }

@@ -1,9 +1,8 @@
 package pl.hubertkuch.jdocify.description;
 
-import pl.hubertkuch.jdocify.parser.JavaDocParser;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
+import pl.hubertkuch.jdocify.parser.JavaDocParser;
 
 public class JavaDocDescriptionStrategy implements DescriptionStrategy<Method> {
 

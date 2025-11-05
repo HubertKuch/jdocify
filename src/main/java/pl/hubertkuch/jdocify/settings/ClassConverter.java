@@ -1,7 +1,7 @@
 package pl.hubertkuch.jdocify.settings;
 
-import org.aeonbits.owner.Converter;
 import java.lang.reflect.Method;
+import org.aeonbits.owner.Converter;
 
 public class ClassConverter implements Converter<Class<?>> {
 

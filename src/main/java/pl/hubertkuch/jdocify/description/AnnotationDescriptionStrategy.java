@@ -1,9 +1,8 @@
 package pl.hubertkuch.jdocify.description;
 
-import pl.hubertkuch.jdocify.annotations.DocumentedMethod;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
+import pl.hubertkuch.jdocify.annotations.DocumentedMethod;
 
 public class AnnotationDescriptionStrategy implements DescriptionStrategy<Method> {
     @Override
@@ -14,6 +13,7 @@ public class AnnotationDescriptionStrategy implements DescriptionStrategy<Method
                 return Optional.of(description);
             }
         }
+
         return Optional.empty();
     }
 }

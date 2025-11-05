@@ -1,5 +1,6 @@
 package pl.hubertkuch.jdocify.settings;
 
+import java.nio.file.Path;
 import org.aeonbits.owner.ConfigFactory;
 import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
 import pl.hubertkuch.jdocify.filter.MemberFilter;
@@ -12,8 +13,6 @@ import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
-
-import java.nio.file.Path;
 
 public class Settings {
     private static DocifySettings instance;

@@ -5,8 +5,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * An interface for filtering class members (fields, constructors, and methods).
- * Implementations of this interface can be used to control which members are included in the generated documentation.
+ * An interface for filtering class members (fields, constructors, and methods). Implementations of
+ * this interface can be used to control which members are included in the generated documentation.
  */
 public interface MemberFilter {
 

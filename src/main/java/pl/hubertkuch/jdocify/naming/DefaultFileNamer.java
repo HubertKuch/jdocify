@@ -1,9 +1,8 @@
 package pl.hubertkuch.jdocify.naming;
 
+import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 import pl.hubertkuch.jdocify.annotations.DocumentedStory;
-
-import java.util.Locale;
 
 public class DefaultFileNamer implements FileNamer {
     @Override

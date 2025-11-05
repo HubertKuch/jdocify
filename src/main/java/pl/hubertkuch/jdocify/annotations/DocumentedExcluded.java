@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that can be applied to any element (class, method, field) to explicitly exclude it from the generated documentation.
+ * An annotation that can be applied to any element (class, method, field) to explicitly exclude it
+ * from the generated documentation.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR})
-public @interface DocumentedExcluded {
-}
+public @interface DocumentedExcluded {}

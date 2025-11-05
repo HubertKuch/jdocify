@@ -1,6 +1,7 @@
 package pl.hubertkuch.jdocify.renderer;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.vo.ClassData;
@@ -9,8 +10,6 @@ import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
 import pl.hubertkuch.jdocify.vo.StoryData;
 import pl.hubertkuch.jdocify.vo.StoryStepData;
-
-import java.util.List;
 
 public class DefaultMarkdownRenderer implements MarkdownRenderer {
 
@@ -21,15 +20,21 @@ public class DefaultMarkdownRenderer implements MarkdownRenderer {
     }
 
     public String render(ClassData classData) throws IOException {
-        String fieldsContent = classData.fields().stream().map(this::renderField).collect(Collectors.joining("\n"));
-        String constructorsContent = classData
-                .constructors()
-                .stream()
-                .map(this::renderConstructor)
-                .collect(Collectors.joining("\n"));
-        String methodsContent = classData.methods().stream().map(this::renderMethod).collect(Collectors.joining("\n"));
+        String fieldsContent =
+                classData.fields().stream()
+                        .map(this::renderField)
+                        .collect(Collectors.joining("\n"));
+        String constructorsContent =
+                classData.constructors().stream()
+                        .map(this::renderConstructor)
+                        .collect(Collectors.joining("\n"));
+        String methodsContent =
+                classData.methods().stream()
+                        .map(this::renderMethod)
+                        .collect(Collectors.joining("\n"));
 
-        var renderedClassData = new ClassData(classData.name(), classData.description(), null, null, null);
+        var renderedClassData =
+                new ClassData(classData.name(), classData.description(), null, null, null);
 
         String classTemplate = templateEngine.getTemplate("class.md.template");
         String renderedTemplate = templateEngine.render(classTemplate, renderedClassData);
@@ -88,6 +93,7 @@ public class DefaultMarkdownRenderer implements MarkdownRenderer {
         }
 
         renderedStory = renderedStory.replace("{{steps}}", stepsContent.toString());
+
         return renderedStory;
     }
 

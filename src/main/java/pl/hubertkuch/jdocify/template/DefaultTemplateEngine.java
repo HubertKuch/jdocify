@@ -12,8 +12,7 @@ public class DefaultTemplateEngine implements TemplateEngine {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTemplateEngine.class);
 
-    public DefaultTemplateEngine() {
-    }
+    public DefaultTemplateEngine() {}
 
     public String getTemplate(String templateName) throws IOException {
         try (var is =

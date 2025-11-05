@@ -10,7 +10,6 @@ public interface DocifySettings extends Config {
     @Config.Key("jdocify.integration.output")
     String getIntegrationOutput();
 
-
     @Config.Key("jdocify.ai.path")
     String getModelPath();
 

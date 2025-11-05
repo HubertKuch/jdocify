@@ -14,15 +14,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.hubertkuch.jdocify.ai.AiDocGenerator;
 import pl.hubertkuch.jdocify.ai.ModelManager;
 import pl.hubertkuch.jdocify.annotations.Documented;
-import pl.hubertkuch.jdocify.annotations.DocumentedExcluded;
 import pl.hubertkuch.jdocify.annotations.DocumentedStory;
 import pl.hubertkuch.jdocify.description.AiDescriptionStrategy;
 import pl.hubertkuch.jdocify.description.AnnotationDescriptionStrategy;
@@ -33,7 +29,6 @@ import pl.hubertkuch.jdocify.naming.FileNamer;
 import pl.hubertkuch.jdocify.parser.JavaDocParser;
 import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
 import pl.hubertkuch.jdocify.settings.Settings;
-import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
 import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.vo.ClassData;
 import pl.hubertkuch.jdocify.vo.ConstructorData;
@@ -41,7 +36,6 @@ import pl.hubertkuch.jdocify.vo.FieldData;
 import pl.hubertkuch.jdocify.vo.MethodData;
 import pl.hubertkuch.jdocify.vo.StoryData;
 import pl.hubertkuch.jdocify.vo.StoryStepData;
-import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 public class DocumentationGenerator {
@@ -63,7 +57,6 @@ public class DocumentationGenerator {
         this.memberFilter = Settings.memberFilter();
     }
 
-
     public void generate(Set<Class<?>> classes) throws IOException {
         var markdownRenderer = new DefaultMarkdownRenderer(templateEngine);
         Optional<AiDocGenerator> aiDocGeneratorOptional = modelManager.initAiDocGenerator();
@@ -73,7 +66,11 @@ public class DocumentationGenerator {
                 log.info("Generating documentation for class: {}", clazz.getName());
 
                 var javaDocParser = new JavaDocParser(getFilePath(clazz));
-                var classData = processClass(clazz, javaDocParser, getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
+                var classData =
+                        processClass(
+                                clazz,
+                                javaDocParser,
+                                getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
                 var renderedTemplate = markdownRenderer.render(classData);
 
                 documentationWriter.write(fileNamer.name(clazz), renderedTemplate);
@@ -93,55 +90,82 @@ public class DocumentationGenerator {
 
                 var documentedStoryAnnotation = storyClass.getAnnotation(DocumentedStory.class);
                 if (documentedStoryAnnotation == null) {
-                    log.warn("Class {} is in storyClasses but does not have @DocumentedStory annotation.", storyClass.getName());
+                    log.warn(
+                            "Class {} is in storyClasses but does not have @DocumentedStory"
+                                    + " annotation.",
+                            storyClass.getName());
                     continue;
                 }
 
                 var storyData = processStory(documentedStoryAnnotation, aiDocGeneratorOptional);
                 var renderedTemplate = markdownRenderer.render(storyData);
 
-                documentationWriter.write(fileNamer.name(documentedStoryAnnotation), renderedTemplate);
+                documentationWriter.write(
+                        fileNamer.name(documentedStoryAnnotation), renderedTemplate);
             }
         } finally {
             aiDocGeneratorOptional.ifPresent(AiDocGenerator::close);
         }
     }
 
-    private StoryData processStory(DocumentedStory documentedStoryAnnotation, Optional<AiDocGenerator> aiDocGeneratorOptional) throws IOException {
+    private StoryData processStory(
+            DocumentedStory documentedStoryAnnotation,
+            Optional<AiDocGenerator> aiDocGeneratorOptional)
+            throws IOException {
 
         var storyName = documentedStoryAnnotation.name();
         List<StoryStepData> storyStepsData = new ArrayList<>();
 
         for (var storyStepAnnotation : documentedStoryAnnotation.steps()) {
-            if (! storyStepAnnotation.narrative().isEmpty()) {
+            if (!storyStepAnnotation.narrative().isEmpty()) {
                 // It's a narrative step
-                storyStepsData.add(new StoryStepData(Optional.of(storyStepAnnotation.narrative()), Optional.empty(), Collections.emptyList()));
-            } else if (! storyStepAnnotation.element().equals(void.class)) {
+                storyStepsData.add(
+                        new StoryStepData(
+                                Optional.of(storyStepAnnotation.narrative()),
+                                Optional.empty(),
+                                Collections.emptyList()));
+            } else if (!storyStepAnnotation.element().equals(void.class)) {
                 // It's an element step
                 Class<?> elementClass = storyStepAnnotation.element();
                 var javaDocParser = new JavaDocParser(getFilePath(elementClass));
-                var elementClassData = processClass(elementClass, javaDocParser, getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
+                var elementClassData =
+                        processClass(
+                                elementClass,
+                                javaDocParser,
+                                getDescriptionStrategies(javaDocParser, aiDocGeneratorOptional));
 
                 List<MethodData> filteredMethodData = new ArrayList<>();
-                if (storyStepAnnotation.methods().length > 0 && elementClassData.methods() != null) {
-                    Set<String> methodNamesToInclude = new HashSet<>(Arrays.asList(storyStepAnnotation.methods()));
-                    filteredMethodData = elementClassData
-                            .methods()
-                            .stream()
-                            .filter(methodData -> methodNamesToInclude.contains(methodData.name()))
-                            .toList();
+                if (storyStepAnnotation.methods().length > 0
+                        && elementClassData.methods() != null) {
+                    Set<String> methodNamesToInclude =
+                            new HashSet<>(Arrays.asList(storyStepAnnotation.methods()));
+                    filteredMethodData =
+                            elementClassData.methods().stream()
+                                    .filter(
+                                            methodData ->
+                                                    methodNamesToInclude.contains(
+                                                            methodData.name()))
+                                    .toList();
                 } else if (elementClassData.methods() != null) {
                     // If no specific methods are mentioned, include all methods
                     filteredMethodData = elementClassData.methods();
                 }
 
-                storyStepsData.add(new StoryStepData(Optional.empty(), Optional.of(elementClassData), filteredMethodData));
+                storyStepsData.add(
+                        new StoryStepData(
+                                Optional.empty(),
+                                Optional.of(elementClassData),
+                                filteredMethodData));
             }
         }
+
         return new StoryData(storyName, storyStepsData);
     }
 
-    private ClassData processClass(Class<?> clazz, JavaDocParser javaDocParser, List<DescriptionStrategy<Method>> descriptionStrategies) {
+    private ClassData processClass(
+            Class<?> clazz,
+            JavaDocParser javaDocParser,
+            List<DescriptionStrategy<Method>> descriptionStrategies) {
         var documentedAnnotation = clazz.getAnnotation(Documented.class);
         var classDescription = documentedAnnotation.description();
 
@@ -149,55 +173,72 @@ public class DocumentationGenerator {
             classDescription = javaDocParser.getClassJavaDoc(clazz.getSimpleName()).orElse("");
         }
 
-        var className = documentedAnnotation.name().isEmpty() ? clazz.getSimpleName() : documentedAnnotation.name();
+        var className =
+                documentedAnnotation.name().isEmpty()
+                        ? clazz.getSimpleName()
+                        : documentedAnnotation.name();
 
-        return new ClassData(className, classDescription, processFields(clazz), processConstructors(clazz), processMethods(clazz, descriptionStrategies));
+        return new ClassData(
+                className,
+                classDescription,
+                processFields(clazz),
+                processConstructors(clazz),
+                processMethods(clazz, descriptionStrategies));
     }
 
     private List<FieldData> processFields(Class<?> clazz) {
-        return Arrays
-                .stream(clazz.getDeclaredFields())
+        return Arrays.stream(clazz.getDeclaredFields())
                 .filter(memberFilter::filterField)
                 .map(field -> new FieldData(field.getName(), field.getType().getSimpleName()))
                 .toList();
     }
 
     private List<ConstructorData> processConstructors(Class<?> clazz) {
-        var constructors = Arrays
-                .stream(clazz.getDeclaredConstructors())
-                .filter(memberFilter::filterConstructor)
-                .map(constructor -> new ConstructorData(getConstructorSignature(constructor)))
-                .toList();
-        log.info("Processed {} constructors for class {}: {}", constructors.size(), clazz.getSimpleName(), constructors);
+        var constructors =
+                Arrays.stream(clazz.getDeclaredConstructors())
+                        .filter(memberFilter::filterConstructor)
+                        .map(
+                                constructor ->
+                                        new ConstructorData(getConstructorSignature(constructor)))
+                        .toList();
+        log.info(
+                "Processed {} constructors for class {}: {}",
+                constructors.size(),
+                clazz.getSimpleName(),
+                constructors);
 
         return constructors;
     }
 
-    private List<MethodData> processMethods(Class<?> clazz, List<DescriptionStrategy<Method>> descriptionStrategies) {
-        return Arrays
-                .stream(clazz.getDeclaredMethods())
+    private List<MethodData> processMethods(
+            Class<?> clazz, List<DescriptionStrategy<Method>> descriptionStrategies) {
+        return Arrays.stream(clazz.getDeclaredMethods())
                 .filter(memberFilter::filterMethod)
-                .map(method -> {
-                    var description = descriptionStrategies
-                            .stream()
-                            .map(strategy -> strategy.getDescription(method))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .findFirst()
-                            .orElse("");
+                .map(
+                        method -> {
+                            var description =
+                                    descriptionStrategies.stream()
+                                            .map(strategy -> strategy.getDescription(method))
+                                            .filter(Optional::isPresent)
+                                            .map(Optional::get)
+                                            .findFirst()
+                                            .orElse("");
 
-                    return new MethodData(method.getName(), getMethodSignature(method), description);
-                })
+                            return new MethodData(
+                                    method.getName(), getMethodSignature(method), description);
+                        })
                 .toList();
     }
 
-    private List<DescriptionStrategy<Method>> getDescriptionStrategies(JavaDocParser javaDocParser, Optional<AiDocGenerator> aiDocGenerator) {
+    private List<DescriptionStrategy<Method>> getDescriptionStrategies(
+            JavaDocParser javaDocParser, Optional<AiDocGenerator> aiDocGenerator) {
         List<DescriptionStrategy<Method>> strategies = new ArrayList<>();
 
         strategies.add(new AnnotationDescriptionStrategy());
         strategies.add(new JavaDocDescriptionStrategy(javaDocParser));
 
-        aiDocGenerator.ifPresent(docGenerator -> strategies.add(new AiDescriptionStrategy(docGenerator)));
+        aiDocGenerator.ifPresent(
+                docGenerator -> strategies.add(new AiDescriptionStrategy(docGenerator)));
 
         return strategies;
     }
@@ -211,10 +252,14 @@ public class DocumentationGenerator {
     }
 
     private String getExecutableSignature(Executable executable) {
-        return Modifier.toString(executable.getModifiers()) + " " + executable.getName() + "(" + Arrays
-                .stream(executable.getParameters())
-                .map(p -> p.getType().getSimpleName() + " " + p.getName())
-                .collect(Collectors.joining(", ")) + ")";
+        return Modifier.toString(executable.getModifiers())
+                + " "
+                + executable.getName()
+                + "("
+                + Arrays.stream(executable.getParameters())
+                        .map(p -> p.getType().getSimpleName() + " " + p.getName())
+                        .collect(Collectors.joining(", "))
+                + ")";
     }
 
     private String getFilePath(Class<?> clazz) {

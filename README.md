@@ -23,7 +23,7 @@ Here is the list of annotations that will form the core of JDocify:
 *   `@DocumentedStory`: An annotation that can be placed on a package or a dedicated class to combine multiple documented components into a single Markdown file. This is ideal for documenting complex workflows or features.
     *   **Parameters:**
         *   `name`: The name of the generated Markdown file (e.g., "WebSocket-Creation-Workflow").
-        *   `elements`: An array describing the story's content. This can be a mix of `@Documented` class references, specific methods, and narrative text blocks, allowing for rich, tutorial-style documentation.
+        *   `steps`: An array of `@StoryStep` annotations describing the story's content.
 
 ## Reflection-Based Documentation
 
@@ -40,14 +40,54 @@ This approach minimizes the number of annotations needed, keeping your code clea
 ### JavaDoc Integration
 JDocify will automatically parse and incorporate your existing JavaDoc comments. This means that the descriptions for your classes, methods, and fields can be sourced directly from the JavaDocs, reducing the need to add `description` parameters to the annotations unless you want to override the JavaDoc content.
 
-### `@see` Tag Handling and Hyperlinking
-To create a rich, interconnected documentation experience, JDocify will have special handling for the `@see` tag in your JavaDocs. When the generator encounters a `@see` tag that points to another element that is also part of the generated documentation, it will automatically create a hyperlink to that element's section. This makes it easy for readers to navigate between related components.
-
-### Automated Diagram Generation
-JDocify will analyze the relationships between your `@Documented` classes (e.g., field types, method parameters, return types) to automatically generate class diagrams. These diagrams will be embedded into the documentation using a syntax compatible with modern Markdown renderers like VitePress (e.g., Mermaid.js). This provides a powerful visual aid for understanding your application's architecture directly within the documentation.
+### `@see` Tag Handling
+To create a rich, interconnected documentation experience, JDocify renders Javadoc block tags, including `@see`, in a structured format. For example, a `@see` tag is rendered as **see**: content. Automatic hyperlinking to other documented elements is a goal for future versions.
 
 ### AI-Powered Documentation (Optional)
 For methods that lack JavaDoc comments, JDocify can use a Large Language Model (LLM) to automatically generate a description. By analyzing the method's name, parameters, and return type, the LLM can infer its purpose and generate a human-readable description. For example, a method `public User getUserById(UUID id)` could have a description automatically generated as: "Gets the user by their ID, taking a UUID as a parameter." This feature will be optional and can be enabled in the project's configuration.
+
+### Custom Member Filtering
+
+JDocify provides a `MemberFilter` interface that allows you to programmatically control which class members (fields, constructors, and methods) are included in the documentation. This provides a powerful mechanism for implementing custom filtering logic beyond the default behavior.
+
+By default, JDocify uses the `DefaultMemberFilter`, which includes all public members that are not annotated with `@DocumentedExcluded`.
+
+To use a custom filter, you need to:
+1.  Create a class that implements the `pl.hubertkuch.jdocify.filter.MemberFilter` interface.
+2.  Implement the `filterField`, `filterConstructor`, and `filterMethod` methods to define your filtering logic.
+3.  Set your custom filter in the `Settings` before running the documentation generator.
+
+**Example of a custom filter that includes only private members:**
+
+```java
+import pl.hubertkuch.jdocify.filter.MemberFilter;
+import pl.hubertkuch.jdocify.settings.Settings;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
+public class PrivateMemberFilter implements MemberFilter {
+
+    @Override
+    public boolean filterField(Field field) {
+        return Modifier.isPrivate(field.getModifiers());
+    }
+
+    @Override
+    public boolean filterConstructor(Constructor<?> constructor) {
+        return Modifier.isPrivate(constructor.getModifiers());
+    }
+
+    @Override
+    public boolean filterMethod(Method method) {
+        return Modifier.isPrivate(method.getModifiers());
+    }
+}
+
+// To use this filter:
+Settings.setMemberFilter(new PrivateMemberFilter());
+```
 
 ## Usage Example
 
@@ -86,13 +126,13 @@ public class UserService {
 // On a package-info.java file or a dedicated empty class
 @DocumentedStory(
     name = "User-Authentication-Flow",
-    elements = {
-        @StoryNarrative("The authentication process begins with the `AuthService`. A user provides their credentials, which are then validated."),
-        @StoryElement(value = AuthService.class, methods = {"authenticate"}),
-        @StoryNarrative("If authentication is successful, a `User` object is retrieved and a JWT token is generated by the `JwtProvider`."),
-        @StoryElement(User.class),
-        @StoryElement(value = JwtProvider.class, methods = {"generateToken"}),
-        @StoryNarrative("This token is then returned to the client for subsequent requests.")
+    steps = {
+        @StoryStep(narrative = "The authentication process begins with the `AuthService`. A user provides their credentials, which are then validated."),
+        @StoryStep(element = AuthService.class, methods = {"authenticate"}),
+        @StoryStep(narrative = "If authentication is successful, a `User` object is retrieved and a JWT token is generated by the `JwtProvider`."),
+        @StoryStep(element = User.class),
+        @StoryStep(element = JwtProvider.class, methods = {"generateToken"}),
+        @StoryStep(narrative = "This token is then returned to the client for subsequent requests.")
     }
 )
 package com.example.auth;
@@ -100,9 +140,10 @@ package com.example.auth;
 
 ## Roadmap & Future Ideas
 
-*   **Documentation Generator:** The core of the project will be a tool (e.g., a Gradle plugin) that scans the compiled bytecode for these annotations and generates the documentation.
+*   **Documentation Generator:** The core of the project will be a tool that scans the compiled bytecode for these annotations and generates the documentation.
 *   **Integration with Build Tools:** Seamless integration with Gradle.
-*   **Project-Level Configuration:** Support for a `jdocify.yml` file or configuration within the `build.gradle` to define global settings like output directories, project-wide excludes, and AI feature toggles.
+*   **Project-Level Configuration:** Support for a `config.properties` file to define global settings like output directories, project-wide excludes, and AI feature toggles.
 *   **Documentation Validator:** A built-in linter to check for common documentation issues like missing JavaDocs, broken `@see` links, or invalid story elements.
 *   **Custom Markdown Templates:** Allow users to provide their own templates to control the structure and layout of the generated Markdown files.
 *   **Output Formats:** While initially targeting Markdown, the architecture should allow for extension to other formats in the future.
+*   **Automated Diagram Generation:** JDocify aims to analyze the relationships between your `@Documented` classes (e.g., field types, method parameters, return types) to automatically generate class diagrams. These diagrams would be embedded into the documentation using a syntax compatible with modern Markdown renderers like VitePress (e.g., Mermaid.js). This provides a powerful visual aid for understanding your application's architecture directly within the documentation.

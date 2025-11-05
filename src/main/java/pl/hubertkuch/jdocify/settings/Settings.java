@@ -1,18 +1,102 @@
 package pl.hubertkuch.jdocify.settings;
 
+import java.nio.file.Path;
 import org.aeonbits.owner.ConfigFactory;
+import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
+import pl.hubertkuch.jdocify.filter.MemberFilter;
+import pl.hubertkuch.jdocify.integrations.Integration;
+import pl.hubertkuch.jdocify.integrations.VitePressIntegration;
+import pl.hubertkuch.jdocify.naming.FileNamer;
+import pl.hubertkuch.jdocify.renderer.DefaultMarkdownRenderer;
+import pl.hubertkuch.jdocify.renderer.MarkdownRenderer;
+import pl.hubertkuch.jdocify.template.DefaultTemplateEngine;
+import pl.hubertkuch.jdocify.template.TemplateEngine;
+import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
+import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
 public class Settings {
     private static DocifySettings instance;
+    private static TemplateEngine templateEngine;
+    private static DocumentationWriter documentationWriter;
+    private static Integration integration;
+    private static MarkdownRenderer markdownRenderer;
+    private static FileNamer fileNamer;
+    private static MemberFilter memberFilter;
+
+    public static synchronized void initialize() {
+        setTemplateEngine(new DefaultTemplateEngine());
+        setDocumentationWriter(new DefaultDocumentationWriter());
+        setMarkdownRenderer(new DefaultMarkdownRenderer(templateEngine()));
+        setIntegration(new VitePressIntegration(Path.of(get().getIntegrationOutput())));
+        setFileNamer(new pl.hubertkuch.jdocify.naming.DefaultFileNamer());
+        setMemberFilter(new DefaultMemberFilter());
+    }
 
     public static synchronized DocifySettings get() {
         if (instance == null) {
             instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
         }
+
         return instance;
     }
 
     public static synchronized void reset() {
         instance = null;
+    }
+
+    public static TemplateEngine templateEngine() {
+        return templateEngine;
+    }
+
+    public static void setTemplateEngine(TemplateEngine templateEngine) {
+        Settings.templateEngine = templateEngine;
+    }
+
+    public static DocifySettings instance() {
+        return instance;
+    }
+
+    public static void setInstance(DocifySettings instance) {
+        Settings.instance = instance;
+    }
+
+    public static DocumentationWriter documentationWriter() {
+        return documentationWriter;
+    }
+
+    public static void setDocumentationWriter(DocumentationWriter documentationWriter) {
+        Settings.documentationWriter = documentationWriter;
+    }
+
+    public static Integration integration() {
+        return integration;
+    }
+
+    public static void setIntegration(Integration integration) {
+        Settings.integration = integration;
+    }
+
+    public static MarkdownRenderer markdownRenderer() {
+        return markdownRenderer;
+    }
+
+    public static void setMarkdownRenderer(MarkdownRenderer markdownRenderer) {
+        Settings.markdownRenderer = markdownRenderer;
+    }
+
+    public static void setFileNamer(FileNamer fileNamer) {
+        Settings.fileNamer = fileNamer;
+    }
+
+    public static FileNamer fileNamer() {
+        return fileNamer;
+    }
+
+    public static MemberFilter memberFilter() {
+        return memberFilter;
+    }
+
+    public static void setMemberFilter(MemberFilter memberFilter) {
+        Settings.memberFilter = memberFilter;
     }
 }

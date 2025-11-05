@@ -3,6 +3,8 @@ package pl.hubertkuch.jdocify.settings;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+
 import org.aeonbits.owner.ConfigFactory;
 import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
 import pl.hubertkuch.jdocify.filter.MemberFilter;
@@ -37,18 +39,15 @@ public class Settings {
 
     public static synchronized DocifySettings get() {
         if (instance == null) {
-            String customConfigFile = System.getProperty("jdocify.configFile");
+            var configFilePath = System.getProperty("jdocify.configFile");
 
-            if (customConfigFile != null) {
-                Map<String, String> properties = new HashMap<>();
-
-                String allSources = "file:" + customConfigFile
-                        + ",file:~/.jdocify/config.properties"
-                        + ",classpath:default.properties";
-
-                properties.put("owner.sources", allSources);
-
-                instance = ConfigFactory.create(DocifySettings.class, properties);
+            if (configFilePath != null && !configFilePath.isEmpty()) {
+                try {
+                    instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
+                } catch (Exception e) {
+                    System.err.println("JDocify ERROR: Failed to convert config path to URI. Falling back.");
+                    instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
+                }
             } else {
                 instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
             }

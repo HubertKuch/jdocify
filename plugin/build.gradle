@@ -11,11 +11,15 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 dependencies {
     implementation(gradleApi())
     implementation project(':core')
-
-    implementation 'org.codehaus.groovy:groovy-all:3.0.21'
 
     implementation 'de.kherud:llama:4.2.0'
     implementation 'org.reflections:reflections:0.10.2'

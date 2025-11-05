@@ -1,6 +1,5 @@
 package pl.hubertkuch.jdocify;
 
-import java.io.IOException;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.slf4j.Logger;
@@ -9,6 +8,8 @@ import pl.hubertkuch.jdocify.annotations.Documented;
 import pl.hubertkuch.jdocify.annotations.DocumentedStory;
 import pl.hubertkuch.jdocify.generator.DocumentationGenerator;
 import pl.hubertkuch.jdocify.settings.Settings;
+
+import java.io.IOException;
 
 public class JDocify {
 
@@ -21,6 +22,9 @@ public class JDocify {
 
     public void run() throws IOException {
         var packageToScan = Settings.get().getScanPackage();
+
+        Settings.initialize();
+
         if (packageToScan == null || packageToScan.isEmpty()) {
             log.error("Error: The package to scan was not specified.");
             log.error(

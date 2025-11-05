@@ -2,7 +2,7 @@ package pl.hubertkuch.jdocify.settings;
 
 import org.aeonbits.owner.Config;
 
-@Config.Sources({"file:~/.jdocify/config.properties", "classpath:default.properties"})
+@Config.Sources({"file:~/.jdocify/config.properties", "classpath:default.properties", "classpath:jdocify.properties"})
 public interface DocifySettings extends Config {
     @Config.Key("jdocify.scanPackage")
     String getScanPackage();

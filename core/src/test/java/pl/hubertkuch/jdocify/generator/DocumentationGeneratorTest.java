@@ -30,7 +30,7 @@ public class DocumentationGeneratorTest {
 
     @BeforeEach
     public void setUp() {
-        Settings.initialize();
+        Settings.initializeDefaults();
         documentationGenerator = new DocumentationGenerator();
     }
 

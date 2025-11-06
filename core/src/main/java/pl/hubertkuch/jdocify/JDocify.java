@@ -23,7 +23,7 @@ public class JDocify {
     public void run() throws IOException {
         var packageToScan = Settings.get().getScanPackage();
 
-        Settings.initialize();
+        Settings.initializeDefaults();
 
         if (packageToScan == null || packageToScan.isEmpty()) {
             log.error("Error: The package to scan was not specified.");
@@ -34,9 +34,7 @@ public class JDocify {
             return;
         }
 
-        log.info(
-                "Scanning for @Documented and @DocumentedStory classes in package: {}",
-                packageToScan);
+        log.info("Scanning for @Documented and @DocumentedStory classes in package: {}", packageToScan);
         var reflections = new Reflections(packageToScan, Scanners.TypesAnnotated);
         var documentationGenerator = new DocumentationGenerator();
 

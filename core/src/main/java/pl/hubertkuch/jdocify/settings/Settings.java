@@ -1,11 +1,9 @@
 package pl.hubertkuch.jdocify.settings;
 
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
+import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.hubertkuch.jdocify.filter.DefaultMemberFilter;
 import pl.hubertkuch.jdocify.filter.MemberFilter;
 import pl.hubertkuch.jdocify.integrations.Integration;
@@ -19,7 +17,12 @@ import pl.hubertkuch.jdocify.template.TemplateEngine;
 import pl.hubertkuch.jdocify.writer.DefaultDocumentationWriter;
 import pl.hubertkuch.jdocify.writer.DocumentationWriter;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
 public class Settings {
+    private static final Logger log = LoggerFactory.getLogger(Settings.class);
     private static DocifySettings instance;
     private static TemplateEngine templateEngine;
     private static DocumentationWriter documentationWriter;
@@ -28,11 +31,15 @@ public class Settings {
     private static FileNamer fileNamer;
     private static MemberFilter memberFilter;
 
-    public static synchronized void initialize() {
+    public static synchronized void initializeDefaults() {
         setTemplateEngine(new DefaultTemplateEngine());
         setDocumentationWriter(new DefaultDocumentationWriter());
         setMarkdownRenderer(new DefaultMarkdownRenderer(templateEngine()));
-        setIntegration(new VitePressIntegration(Path.of(get().getIntegrationOutput())));
+        var integrationOutput = get().getIntegrationOutput();
+
+        log.info("Integration output " + integrationOutput);
+
+        setIntegration(new VitePressIntegration(Path.of(integrationOutput)));
         setFileNamer(new DefaultFileNamer());
         setMemberFilter(new DefaultMemberFilter());
     }
@@ -43,15 +50,23 @@ public class Settings {
 
             if (configFilePath != null && !configFilePath.isEmpty()) {
                 try {
-                    instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
+                    log.info("Config file path: {}", configFilePath);
+
+                    var props = new Properties();
+
+                    props.load(Files.newInputStream(Path.of(configFilePath)));
+
+                    instance = ConfigFactory.create(DocifySettings.class, props);
                 } catch (Exception e) {
-                    System.err.println("JDocify ERROR: Failed to convert config path to URI. Falling back.");
+                    log.error("Failed to load properties", e);
                     instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
                 }
             } else {
                 instance = ConfigFactory.create(DocifySettings.class, System.getProperties());
             }
         }
+
+        log.info("Getting configuration properties instance: {}", instance);
 
         return instance;
     }

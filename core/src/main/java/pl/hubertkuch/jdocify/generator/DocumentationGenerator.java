@@ -169,12 +169,12 @@ public class DocumentationGenerator {
         var documentedAnnotation = clazz.getAnnotation(Documented.class);
         var classDescription = documentedAnnotation.description();
 
-        if (classDescription.isEmpty()) {
+        if (classDescription.isBlank()) {
             classDescription = javaDocParser.getClassJavaDoc(clazz.getSimpleName()).orElse("");
         }
 
         var className =
-                documentedAnnotation.name().isEmpty()
+                documentedAnnotation.name().isBlank()
                         ? clazz.getSimpleName()
                         : documentedAnnotation.name();
 
@@ -237,8 +237,7 @@ public class DocumentationGenerator {
         strategies.add(new AnnotationDescriptionStrategy());
         strategies.add(new JavaDocDescriptionStrategy(javaDocParser));
 
-        aiDocGenerator.ifPresent(
-                docGenerator -> strategies.add(new AiDescriptionStrategy(docGenerator)));
+        aiDocGenerator.ifPresent(docGenerator -> strategies.add(new AiDescriptionStrategy(docGenerator)));
 
         return strategies;
     }
